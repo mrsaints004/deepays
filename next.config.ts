@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    "@x402/core",
+    "@x402/evm",
+    "@coinbase/cdp-sdk",
+  ],
   images: {
     remotePatterns: [
       {

@@ -3,6 +3,9 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { validateOrigin } from "@/lib/csrf";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsonBody = Record<string, any>;
+
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -11,7 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: Record<string, unknown>;
+  let body: JsonBody;
   try {
     body = await request.json();
   } catch {
@@ -25,10 +28,11 @@ export async function POST(request: NextRequest) {
   if (!body.action_url || typeof body.action_url !== "string") {
     return NextResponse.json({ error: "Action URL is required" }, { status: 400 });
   }
-  if (body.reward_usd == null || isNaN(body.reward_usd) || body.reward_usd <= 0 || !Number.isFinite(body.reward_usd)) {
+  const rewardUsd = Number(body.reward_usd);
+  if (body.reward_usd == null || isNaN(rewardUsd) || rewardUsd <= 0 || !Number.isFinite(rewardUsd)) {
     return NextResponse.json({ error: "Reward must be a positive number" }, { status: 400 });
   }
-  if (body.reward_usd > 100000) {
+  if (rewardUsd > 100000) {
     return NextResponse.json({ error: "Reward cannot exceed $100,000" }, { status: 400 });
   }
 
@@ -55,7 +59,7 @@ export async function POST(request: NextRequest) {
       title: body.title.trim(),
       description: (body.description || "").trim(),
       action_url: body.action_url.trim(),
-      reward_usd: body.reward_usd,
+      reward_usd: rewardUsd,
       status: "active",
       category: ["engagement", "follow", "content", "other"].includes(body.category) ? body.category : "engagement",
       expires_at: body.expires_at
@@ -88,7 +92,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: Record<string, unknown>;
+  let body: JsonBody;
   try {
     body = await request.json();
   } catch {
@@ -100,11 +104,14 @@ export async function PUT(request: NextRequest) {
   }
 
   // Validate reward if provided
-  if (body.reward_usd !== undefined && (isNaN(body.reward_usd) || body.reward_usd <= 0 || !Number.isFinite(body.reward_usd))) {
-    return NextResponse.json({ error: "Reward must be a positive number" }, { status: 400 });
-  }
-  if (body.reward_usd !== undefined && body.reward_usd > 100000) {
-    return NextResponse.json({ error: "Reward cannot exceed $100,000" }, { status: 400 });
+  if (body.reward_usd !== undefined) {
+    const rewardVal = Number(body.reward_usd);
+    if (isNaN(rewardVal) || rewardVal <= 0 || !Number.isFinite(rewardVal)) {
+      return NextResponse.json({ error: "Reward must be a positive number" }, { status: 400 });
+    }
+    if (rewardVal > 100000) {
+      return NextResponse.json({ error: "Reward cannot exceed $100,000" }, { status: 400 });
+    }
   }
 
   // Validate status if provided
