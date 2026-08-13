@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { getWeekStart, formatUSD } from "@/lib/utils";
 import { redirect } from "next/navigation";
-import Image from "next/image";
+import { UserAvatar } from "@/components/user-avatar";
 import { WalletConnect } from "@/components/wallet-connect";
 import { DeleteAccount } from "@/components/delete-account";
 import { BASESCAN_URL } from "@/lib/crypto/config";
@@ -76,13 +76,7 @@ export default async function ProfilePage() {
       <div className="lg:flex lg:items-start lg:gap-6">
         {/* Avatar + username */}
         <div className="flex flex-col items-center pt-4 lg:flex-shrink-0 lg:pt-0">
-          {user.x_avatar_url ? (
-            <Image src={user.x_avatar_url} alt={user.x_username} width={80} height={80} className="rounded-full ring-4 ring-border" />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-foreground text-2xl font-bold text-white">
-              {user.x_username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <UserAvatar username={user.x_username} avatarUrl={user.x_avatar_url} size="lg" />
           <h1 className="mt-3 text-lg font-bold tracking-tight">@{user.x_username}</h1>
           {user.email && <p className="mt-0.5 text-[12px] text-muted">{user.email}</p>}
         </div>

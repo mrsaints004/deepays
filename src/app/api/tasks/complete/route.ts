@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { taskId, proofUrl, proofImageUrl } = await request.json();
+    const { taskId, proofUrl } = await request.json();
 
     if (!taskId || typeof taskId !== "string") {
       return NextResponse.json(
@@ -76,32 +76,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate proof based on task category
+    // Validate proof URL (required for all categories)
+    if (!proofUrl || typeof proofUrl !== "string") {
+      return NextResponse.json(
+        { message: "Proof link is required" },
+        { status: 400 }
+      );
+    }
+
     const category = task.category || "engagement";
-    if (category === "content") {
-      if (!proofUrl || typeof proofUrl !== "string") {
+    try {
+      const url = new URL(proofUrl);
+      if (url.protocol !== "https:") {
         return NextResponse.json(
-          { message: "Proof link is required for content tasks" },
+          { message: "Proof link must use HTTPS" },
           { status: 400 }
         );
       }
-      try {
-        const url = new URL(proofUrl);
-        const allowedHosts = ["twitter.com", "www.twitter.com", "x.com", "www.x.com"];
-        if (!allowedHosts.includes(url.hostname)) {
-          return NextResponse.json(
-            { message: "Proof link must be a twitter.com or x.com URL" },
-            { status: 400 }
-          );
-        }
-        if (url.protocol !== "https:") {
-          return NextResponse.json(
-            { message: "Proof link must use HTTPS" },
-            { status: 400 }
-          );
-        }
-        // Validate URL is a real tweet/post path: /<username>/status/<id>
-        // This prevents submitting random x.com pages as proof
+      const allowedHosts = ["twitter.com", "www.twitter.com", "x.com", "www.x.com"];
+      if (!allowedHosts.includes(url.hostname)) {
+        return NextResponse.json(
+          { message: "Proof link must be a twitter.com or x.com URL" },
+          { status: 400 }
+        );
+      }
+      // Content tasks require a direct tweet link
+      if (category === "content") {
         const tweetPattern = /^\/[a-zA-Z0-9_]{1,15}\/status\/\d+/;
         if (!tweetPattern.test(url.pathname)) {
           return NextResponse.json(
@@ -109,19 +109,12 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-      } catch {
-        return NextResponse.json(
-          { message: "Invalid proof URL" },
-          { status: 400 }
-        );
       }
-    } else {
-      if (!proofImageUrl || typeof proofImageUrl !== "string") {
-        return NextResponse.json(
-          { message: "Screenshot proof is required" },
-          { status: 400 }
-        );
-      }
+    } catch {
+      return NextResponse.json(
+        { message: "Invalid proof URL" },
+        { status: 400 }
+      );
     }
 
     // Check if already completed — use maybeSingle to avoid error on zero rows
@@ -146,8 +139,8 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         task_id: taskId,
         week_start: weekStart,
-        proof_url: proofUrl || null,
-        proof_image_url: proofImageUrl || null,
+        proof_url: proofUrl,
+        proof_image_url: null,
         review_status: "pending_review",
       });
 

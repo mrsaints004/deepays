@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { formatUSD, timeAgo } from "@/lib/utils";
+import { UserAvatar } from "@/components/user-avatar";
 
 interface Review {
   id: string; user_id: string; task_id: string; completed_at: string;
@@ -97,7 +98,7 @@ export function ReviewsManager({ pendingReviews: initialPending, approvedReviews
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {review.users?.x_avatar_url ? <Image src={review.users.x_avatar_url} alt="" width={24} height={24} className="h-6 w-6 rounded-full" /> : <div className="flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-white">{review.users?.x_username?.charAt(0)?.toUpperCase() ?? "?"}</div>}
+                      <UserAvatar username={review.users?.x_username ?? "?"} avatarUrl={review.users?.x_avatar_url} size="sm" />
                       <span className="text-[14px] font-semibold">@{review.users?.x_username ?? "Unknown"}</span>
                       {review.users?.email && <span className="text-[12px] text-muted">({review.users.email})</span>}
                     </div>

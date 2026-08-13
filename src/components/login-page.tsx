@@ -4,6 +4,37 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 
+const testimonials = [
+  {
+    name: "Sara Nguyen",
+    handle: "CEO, Luminar Labs",
+    quote: "We ran a product launch through Depay and got 3x the engagement we normally see. Real accounts, real interactions — not the bot farms you get elsewhere.",
+    metric: "3x engagement",
+    seed: "Sara",
+  },
+  {
+    name: "James Okonkwo",
+    handle: "Founder, ChainPulse",
+    quote: "Our X impressions jumped 400% in the first week. The proof-based system means every like and retweet is from a verified person, not a script.",
+    metric: "400% impressions",
+    seed: "James",
+  },
+  {
+    name: "Elena Petrov",
+    handle: "Head of Growth, Vaultix",
+    quote: "We\u2019ve tried five engagement platforms. Depay is the only one where the engagement actually sticks — followers don\u2019t vanish after a week.",
+    metric: "92% retention",
+    seed: "Elena",
+  },
+  {
+    name: "Ryan Torres",
+    handle: "Co-founder, Minted Protocol",
+    quote: "Depay solved our cold-start problem. We went from 200 followers to 4k in a month with consistent, organic-looking engagement on every post.",
+    metric: "20x follower growth",
+    seed: "Ryan",
+  },
+];
+
 export function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -63,7 +94,6 @@ export function LoginPage() {
         return;
       }
 
-      // If email verification is required, show the verification message
       if (data.needsVerification) {
         setVerificationSent(true);
         setLoading(false);
@@ -132,22 +162,19 @@ export function LoginPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative bg-hero overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative section-py">
+      <section className="bg-hero">
+        <div className="section-py">
           <div className="mx-auto max-w-6xl px-5">
             <div className="grid items-center gap-12 lg:grid-cols-2">
-              {/* Left — Headline + CTA */}
+              {/* Left — Headline */}
               <div className="hidden lg:block max-w-xl animate-in">
-                <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[56px] lg:leading-[1.1]">
-                  Engage on X.
+                <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[52px] lg:leading-[1.1]">
+                  Get paid every Monday
                   <br />
-                  <span className="text-white/50">Earn weekly.</span>
+                  <span className="text-white/50">for your X activity.</span>
                 </h1>
-                <p className="mt-5 text-[17px] leading-relaxed text-white/60 lg:text-lg">
-                  Complete simple engagement tasks — likes, retweets, follows, and
-                  comments — and get paid every week. No minimum threshold, no
-                  hidden fees.
+                <p className="mt-5 text-[17px] leading-relaxed text-white/60 max-w-md">
+                  No minimum. No hidden fees. Complete tasks, submit a link, get paid weekly.
                 </p>
                 <div className="mt-8">
                   <button
@@ -168,11 +195,11 @@ export function LoginPage() {
               {/* Mobile headline */}
               <div className="lg:hidden text-center animate-in">
                 <h1 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
-                  Engage on X.{" "}
-                  <span className="text-white/50">Earn weekly.</span>
+                  Get paid every Monday{" "}
+                  <span className="text-white/50">for your X activity.</span>
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-white/60">
-                  Complete engagement tasks and get paid every week.
+                  No minimum. No hidden fees. Complete tasks, get paid weekly.
                 </p>
               </div>
 
@@ -328,90 +355,104 @@ export function LoginPage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Testimonials — replaces "How it works" */}
       <section className="section-py bg-white">
         <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
-            How it works
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-center text-[15px] text-muted">
-            Three steps to start earning from your X engagement.
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-muted mb-8">
+            From the community
           </p>
 
-          <div className="mt-12 grid gap-8 sm:grid-cols-3 stagger-children">
-            {[
-              { n: "1", title: "Sign up with email", desc: "Create your account in seconds. Add your X username so we can track your tasks." },
-              { n: "2", title: "Complete tasks & submit proof", desc: "Like, retweet, follow, and comment on curated posts. Submit a link or screenshot as proof." },
-              { n: "3", title: "Earn weekly payouts", desc: "Once your proof is approved, earnings count toward your weekly payout every Monday." },
-            ].map((step) => (
-              <div key={step.n} className="text-center group">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground text-xl font-bold text-white shadow-soft-md transition-transform duration-300 group-hover:scale-110 group-hover:shadow-soft-lg">
-                  {step.n}
-                </div>
-                <h3 className="mt-5 text-[15px] font-semibold">{step.title}</h3>
-                <p className="mt-2 text-[13px] leading-relaxed text-muted">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="section-py bg-white">
-        <div className="mx-auto max-w-6xl px-5">
-          <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
-            Built for earners
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-center text-[15px] text-muted">
-            Everything you need to earn consistently from your X engagement.
-          </p>
-
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 stagger-children">
-            {[
-              { icon: <><path d="M9 12l2 2 4-4" /><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9-9-1.8-9-9 1.8-9 9-9z" /></>, title: "Proof-based verification", desc: "Submit proof links or screenshots. Admin reviews ensure every task is genuinely completed.", bg: "bg-emerald-50", color: "text-emerald-600" },
-              { icon: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>, title: "Weekly payouts", desc: "Earnings are calculated and paid out every Monday at 00:00 UTC. Consistent and reliable.", bg: "bg-blue-50", color: "text-blue-600" },
-              { icon: <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>, title: "No minimums", desc: "No minimum balance to withdraw. Every dollar you earn is yours from day one.", bg: "bg-amber-50", color: "text-amber-600" },
-              { icon: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>, title: "Transparent earnings", desc: "See exactly how much each task pays before you start. No surprises, no fine print.", bg: "bg-slate-100", color: "text-slate-600" },
-            ].map((f) => (
-              <div key={f.title} className="rounded-2xl border border-border bg-white p-6 transition-all duration-300 hover:shadow-soft-md hover:-translate-y-1 hover-lift">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${f.bg}`}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={f.color}>
-                    {f.icon}
-                  </svg>
-                </div>
-                <h3 className="mt-4 text-[15px] font-semibold">{f.title}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-hero">
-        <div className="section-py">
-          <div className="mx-auto max-w-6xl px-5 text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Ready to start earning?
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-[15px] text-white/50">
-              Sign up, complete tasks, and get paid weekly for your X engagement.
-            </p>
-            <div className="mt-8">
-              <button
-                onClick={() => {
-                  setMode("signup");
-                  document
-                    .getElementById("auth-form")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-[15px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] press"
+          <div className="grid gap-4 md:grid-cols-2">
+            {testimonials.map((t, i) => (
+              <div
+                key={t.seed}
+                className={`rounded-2xl border border-border bg-card p-5 shadow-soft-sm ${i % 2 === 0 ? "md:translate-y-6" : ""}`}
               >
-                Sign Up &amp; Start Earning
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </button>
+                <div className="flex items-center gap-3 mb-3">
+                  <img
+                    src={`https://api.dicebear.com/9.x/notionists/svg?seed=${t.seed}`}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="rounded-full bg-background"
+                  />
+                  <div>
+                    <p className="text-[14px] font-semibold">{t.name}</p>
+                    <p className="text-[12px] text-muted">{t.handle}</p>
+                  </div>
+                  <span className="ml-auto rounded-full bg-accent-light px-2.5 py-1 text-[12px] font-bold tabular-nums text-accent">
+                    {t.metric}
+                  </span>
+                </div>
+                <p className="text-[14px] leading-relaxed text-muted">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Depay — asymmetric feature grid */}
+      <section className="section-py bg-background">
+        <div className="mx-auto max-w-6xl px-5">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Why Depay
+          </h2>
+          <p className="mt-2 text-[15px] text-muted max-w-lg">
+            Built different from the usual engagement platforms.
+          </p>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {/* Large card spanning 2 cols */}
+            <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
+              <h3 className="text-[17px] font-bold">Proof-based payouts</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">
+                Every task requires a proof link. Admin reviews ensure no gaming, no bots. You do real work, you get real money.
+              </p>
+            </div>
+            {/* Small card */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
+              <h3 className="text-[17px] font-bold">No minimums</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">
+                Every dollar is yours from day one. No withdrawal thresholds.
+              </p>
+            </div>
+            {/* Two equal cards */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
+              <h3 className="text-[17px] font-bold">Weekly payouts</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">
+                Calculated and paid every Monday at 00:00 UTC. Consistent and predictable.
+              </p>
+            </div>
+            <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
+              <h3 className="text-[17px] font-bold">Transparent pricing</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">
+                See exactly what each task pays before you start. No surprises, no fine print, no hidden deductions.
+              </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Compact CTA bar */}
+      <section className="bg-hero">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
+          <p className="text-[15px] font-medium text-white/80">
+            Start earning from your X activity today.
+          </p>
+          <button
+            onClick={() => {
+              setMode("signup");
+              document
+                .getElementById("auth-form")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="flex-shrink-0 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] press"
+          >
+            Sign Up
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
         </div>
       </section>
 

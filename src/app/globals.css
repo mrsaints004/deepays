@@ -230,6 +230,13 @@ html {
   transform: scale(0.97);
 }
 
+/* Testimonial offset — asymmetric masonry on desktop */
+@media (min-width: 768px) {
+  .testimonial-offset {
+    transform: translateY(1.5rem);
+  }
+}
+
 /* Section padding for landing page */
 .section-py {
   padding-top: 4rem;

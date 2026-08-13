@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { UserAvatar } from "@/components/user-avatar";
 import type { User } from "@/lib/types/database";
 
 export function TopBar({ user }: { user: User }) {
@@ -14,13 +14,7 @@ export function TopBar({ user }: { user: User }) {
         </Link>
 
         <Link href="/profile" aria-label="Your profile" className="relative">
-          {user.x_avatar_url ? (
-            <Image src={user.x_avatar_url} alt={user.x_username} width={32} height={32} className="rounded-full ring-2 ring-border" />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-white">
-              {user.x_username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <UserAvatar username={user.x_username} avatarUrl={user.x_avatar_url} size="sm" />
         </Link>
       </div>
     </header>

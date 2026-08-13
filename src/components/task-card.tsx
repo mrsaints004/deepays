@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import { formatUSD, cn } from "@/lib/utils";
 import { useToast } from "@/components/toast";
 import type { Task } from "@/lib/types/database";
 
 interface ProofData {
   proofUrl?: string;
-  proofImageUrl?: string;
 }
 
 interface TaskCardProps {
@@ -38,32 +36,15 @@ export function TaskCard({ task, isCompleted, reviewStatus, onComplete, particip
   const [completing, setCompleting] = useState(false);
   const [done, setDone] = useState(isCompleted);
   const [proofUrl, setProofUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isExpired = task.status === "expired";
   const category = task.category || "engagement";
-  const isContentTask = category === "content";
   const isFull = task.max_participants != null && participantCount != null && participantCount >= task.max_participants;
-
-  async function handleUpload(file: File) {
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      setUploadedImageUrl(data.url);
-    } catch { toast("Upload failed. Please try again.", "error"); } finally { setUploading(false); }
-  }
 
   async function handleSubmit() {
     setCompleting(true);
     try {
-      const proof: ProofData = isContentTask ? { proofUrl } : { proofImageUrl: uploadedImageUrl };
-      await onComplete(task.id, proof);
+      await onComplete(task.id, { proofUrl });
       setDone(true);
     } catch { toast("Submission failed. Please try again.", "error"); } finally { setCompleting(false); }
   }
@@ -145,56 +126,24 @@ export function TaskCard({ task, isCompleted, reviewStatus, onComplete, particip
 
             {visited && (
               <div className="rounded-xl border border-border bg-background p-3 animate-slide-up">
-                {isContentTask ? (
-                  <div className="space-y-2">
-                    <label className="text-[12px] font-medium text-muted">Paste your retweet or comment link</label>
-                    <input
-                      type="url"
-                      placeholder="https://x.com/..."
-                      value={proofUrl}
-                      onChange={(e) => setProofUrl(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20"
-                    />
-                    <button
-                      onClick={handleSubmit}
-                      disabled={completing || !proofUrl}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {completing ? <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                      Submit Proof
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <label className="text-[12px] font-medium text-muted">Upload a screenshot as proof</label>
-                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpload(file); }} />
-                    {!uploadedImageUrl ? (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                        className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-border bg-card px-4 py-3 text-[13px] font-semibold text-muted transition-all hover:border-foreground hover:text-foreground active:scale-[0.98] disabled:opacity-50 w-full justify-center"
-                      >
-                        {uploading ? (
-                          <><span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> Uploading...</>
-                        ) : (
-                          <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg> Choose Screenshot</>
-                        )}
-                      </button>
-                    ) : (
-                      <div className="space-y-2">
-                        <Image src={uploadedImageUrl} alt="Proof screenshot" width={300} height={128} className="max-h-32 rounded-lg border border-border object-contain" />
-                        <button
-                          onClick={handleSubmit}
-                          disabled={completing}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
-                        >
-                          {completing ? <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                          Submit Proof
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <label className="text-[12px] font-medium text-muted">Paste the link to your completed action</label>
+                  <input
+                    type="url"
+                    placeholder="https://x.com/..."
+                    value={proofUrl}
+                    onChange={(e) => setProofUrl(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  />
+                  <button
+                    onClick={handleSubmit}
+                    disabled={completing || !proofUrl}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {completing ? <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                    Submit Proof
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/user-avatar";
 import type { User } from "@/lib/types/database";
 
 export function Sidebar({ user }: { user: User }) {
@@ -58,13 +58,7 @@ export function Sidebar({ user }: { user: User }) {
       {/* User info + logout */}
       <div className="mt-auto border-t border-border p-4">
         <div className="flex items-center gap-3">
-          {user.x_avatar_url ? (
-            <Image src={user.x_avatar_url} alt={user.x_username} width={32} height={32} className="rounded-full ring-2 ring-border" />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-white">
-              {user.x_username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <UserAvatar username={user.x_username} avatarUrl={user.x_avatar_url} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="truncate text-[13px] font-semibold">@{user.x_username}</p>
           </div>

@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount, useDisconnect } from "wagmi";
 
 interface WalletConnectProps {
   currentAddress: string | null;
 }
 
 export function WalletConnect({ currentAddress }: WalletConnectProps) {
-  const [address, setAddress] = useState(currentAddress);
+  const [savedAddress, setSavedAddress] = useState(currentAddress);
   const [input, setInput] = useState("");
-  const [mode, setMode] = useState<"idle" | "paste" | "connecting">("idle");
+  const [mode, setMode] = useState<"idle" | "paste">("idle");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const savingRef = useRef(false);
 
-  async function saveAddress(addr: string) {
+  const { openConnectModal } = useConnectModal();
+  const { address: connectedAddress, isConnected } = useAccount();
+  const { disconnect: wagmiDisconnect } = useDisconnect();
+
+  const saveAddress = useCallback(async (addr: string) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError("");
     try {
@@ -27,33 +36,51 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
         throw new Error(data.error || "Failed to save wallet");
       }
       const data = await res.json();
-      setAddress(data.wallet_address);
+      setSavedAddress(data.wallet_address);
       setMode("idle");
       setInput("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save wallet");
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
-  }
+  }, []);
 
-  async function connectBrowserWallet() {
+  // When a wallet connects via RainbowKit, auto-save the address
+  useEffect(() => {
+    if (isConnected && connectedAddress && !savedAddress && !savingRef.current) {
+      saveAddress(connectedAddress);
+    }
+  }, [isConnected, connectedAddress, savedAddress, saveAddress]);
+
+  async function handleConnect() {
     setError("");
-    setMode("connecting");
-    try {
-      const ethereum = (window as unknown as Record<string, unknown>).ethereum as {
-        request: (args: { method: string }) => Promise<string[]>;
-      } | undefined;
-      if (!ethereum) {
-        throw new Error("No wallet detected. Install MetaMask or paste your address.");
+
+    // On mobile in-app dApp browsers (OKX, Trust, MetaMask), window.ethereum
+    // is injected by the host app. Try that first for the fastest UX.
+    const ethereum = (window as unknown as Record<string, unknown>).ethereum as
+      | { request: (args: { method: string }) => Promise<string[]> }
+      | undefined;
+
+    if (ethereum) {
+      try {
+        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+        if (accounts[0]) {
+          await saveAddress(accounts[0]);
+          return;
+        }
+      } catch {
+        // User rejected or provider errored — fall through to RainbowKit
       }
-      const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts[0]) {
-        await saveAddress(accounts[0]);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to connect wallet");
-      setMode("idle");
+    }
+
+    // No injected provider (regular mobile browser / desktop without extension)
+    // → open RainbowKit modal which handles WalletConnect QR, deep links, etc.
+    if (openConnectModal) {
+      openConnectModal();
+    } else {
+      setError("No wallet detected. Use a wallet app\u2019s built-in browser, or paste your address.");
     }
   }
 
@@ -63,7 +90,8 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     try {
       const res = await fetch("/api/user/wallet", { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to disconnect");
-      setAddress(null);
+      setSavedAddress(null);
+      wagmiDisconnect();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to disconnect");
     } finally {
@@ -81,7 +109,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     saveAddress(trimmed);
   }
 
-  if (address) {
+  if (savedAddress) {
     return (
       <div className="rounded-2xl border border-border bg-white p-5">
         <div className="flex items-center justify-between">
@@ -90,7 +118,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
               Payout Wallet (Base)
             </p>
             <p className="mt-1 text-[14px] font-mono font-medium">
-              {address.slice(0, 6)}...{address.slice(-4)}
+              {savedAddress.slice(0, 6)}...{savedAddress.slice(-4)}
             </p>
           </div>
           <button
@@ -117,10 +145,18 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
       {mode === "idle" && (
         <div className="flex gap-2">
           <button
-            onClick={connectBrowserWallet}
-            className="flex-1 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all"
+            onClick={handleConnect}
+            disabled={saving}
+            className="flex-1 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            Connect Wallet
+            {saving ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Connecting...
+              </span>
+            ) : (
+              "Connect Wallet"
+            )}
           </button>
           <button
             onClick={() => setMode("paste")}
@@ -155,13 +191,6 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
               Cancel
             </button>
           </div>
-        </div>
-      )}
-
-      {mode === "connecting" && (
-        <div className="flex items-center gap-2 py-2">
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-          <span className="text-[13px] text-muted">Connecting...</span>
         </div>
       )}
 
