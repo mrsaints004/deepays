@@ -46,13 +46,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    if (!["png", "jpg", "webp"].includes(ext)) {
-      return NextResponse.json(
-        { message: "Invalid file type" },
-        { status: 400 }
-      );
-    }
+    const extMap: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+    const ext = extMap[file.type];
 
     const filename = `${user.id}/${crypto.randomUUID()}.${ext}`;
 

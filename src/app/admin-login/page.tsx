@@ -14,18 +14,24 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    if (res.ok) {
-      router.push("/admin");
-    } else {
-      setError("Invalid password");
+      if (res.ok) {
+        router.push("/admin");
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.message || "Invalid password");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

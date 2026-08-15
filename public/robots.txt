@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /earn
+Disallow: /profile
+
+Sitemap: https://depay.app/sitemap.xml

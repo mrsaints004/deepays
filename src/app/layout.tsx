@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/lib/env";
 import { ToastProvider } from "@/components/toast";
 
 const geistSans = Geist({
@@ -13,14 +14,29 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://depay.app";
+
 export const metadata: Metadata = {
   title: "Depay — Earn weekly by engaging on X",
   description:
     "Complete engagement tasks on X (Twitter) and earn weekly cash rewards. Like, retweet, follow, and get paid.",
+  metadataBase: new URL(appUrl),
   openGraph: {
     title: "Depay — Earn weekly by engaging on X",
     description: "Complete engagement tasks on X and earn weekly cash rewards.",
+    url: appUrl,
+    siteName: "Depay",
     type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Depay — Earn weekly by engaging on X",
+    description: "Complete engagement tasks on X and earn weekly cash rewards.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
