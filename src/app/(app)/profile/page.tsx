@@ -181,7 +181,15 @@ export default async function ProfilePage() {
       </div>
 
       <div className="mt-10 flex justify-center lg:hidden">
-        <a href="/api/auth/logout" className="text-[13px] font-medium text-muted transition-colors hover:text-foreground">Log out</a>
+        <button
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/";
+          }}
+          className="text-[13px] font-medium text-muted transition-colors hover:text-foreground"
+        >
+          Log out
+        </button>
       </div>
     </div>
   );

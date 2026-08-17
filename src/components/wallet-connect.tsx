@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
-import { injected } from "wagmi/connectors";
 
 interface WalletConnectProps {
   currentAddress: string | null;
@@ -26,7 +25,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
   const { openConnectModal } = useConnectModal();
   const { address: connectedAddress, isConnected } = useAccount();
   const { disconnect: wagmiDisconnect } = useDisconnect();
-  const { connectAsync } = useConnect();
+  const { connectAsync, connectors } = useConnect();
 
   const saveAddress = useCallback(async (addr: string) => {
     if (savingRef.current) return;
@@ -55,7 +54,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     }
   }, []);
 
-  // Auto-save when wagmi detects a connected wallet (from RainbowKit modal flow)
+  // Auto-save when wagmi detects a connected wallet (from RainbowKit modal or direct connect)
   useEffect(() => {
     if (isConnected && connectedAddress && !savedAddress && !savingRef.current) {
       saveAddress(connectedAddress);
@@ -68,13 +67,25 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
 
     try {
       // If we're inside a dApp browser (OKX, Trust, MetaMask mobile, etc.),
-      // window.ethereum is injected by the host app. Connect directly — no modal needed.
+      // window.ethereum is injected by the host app.
+      // Find the registered injected connector from wagmi config and connect directly.
       if (hasInjectedProvider()) {
-        const result = await connectAsync({ connector: injected() });
-        if (result.accounts[0]) {
-          await saveAddress(result.accounts[0]);
+        // Find the injected connector from the REGISTERED connectors in wagmi config.
+        // We must use a registered connector — creating new injected() won't work.
+        const injectedConnector =
+          connectors.find((c) => c.id === "injected") ||
+          connectors.find((c) => c.type === "injected") ||
+          connectors.find((c) => c.id === "metaMask") ||
+          connectors.find((c) => c.name.toLowerCase().includes("inject"));
+
+        if (injectedConnector) {
+          const result = await connectAsync({ connector: injectedConnector });
+          if (result.accounts[0]) {
+            await saveAddress(result.accounts[0]);
+          }
+          return;
         }
-        return;
+        // If somehow no injected connector found in config, fall through to modal
       }
 
       // Regular browser (desktop without extension, or mobile Safari/Chrome):
@@ -87,7 +98,11 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Connection failed";
       // Don't show error for user-rejected — they just closed the popup
-      if (!msg.toLowerCase().includes("rejected") && !msg.toLowerCase().includes("denied")) {
+      if (
+        !msg.toLowerCase().includes("rejected") &&
+        !msg.toLowerCase().includes("denied") &&
+        !msg.toLowerCase().includes("user refused")
+      ) {
         setError(msg);
       }
     } finally {

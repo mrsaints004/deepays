@@ -355,7 +355,7 @@ export function LoginPage() {
         </div>
       </section>
 
-      {/* Testimonials — replaces "How it works" */}
+      {/* Testimonials */}
       <section className="section-py bg-white">
         <div className="mx-auto max-w-6xl px-5">
           <p className="text-[13px] font-semibold uppercase tracking-wider text-muted mb-8">
@@ -404,21 +404,18 @@ export function LoginPage() {
           </p>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {/* Large card spanning 2 cols */}
             <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
               <h3 className="text-[17px] font-bold">Proof-based payouts</h3>
               <p className="mt-2 text-[14px] leading-relaxed text-muted">
                 Every task requires a proof link. Admin reviews ensure no gaming, no bots. You do real work, you get real money.
               </p>
             </div>
-            {/* Small card */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
               <h3 className="text-[17px] font-bold">No minimums</h3>
               <p className="mt-2 text-[14px] leading-relaxed text-muted">
                 Every dollar is yours from day one. No withdrawal thresholds.
               </p>
             </div>
-            {/* Two equal cards */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm">
               <h3 className="text-[17px] font-bold">Weekly payouts</h3>
               <p className="mt-2 text-[14px] leading-relaxed text-muted">

@@ -125,11 +125,13 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (payout) {
+          // Use RPC to add in SQL (avoids JS floating-point precision loss)
           const { error: updatePayoutError } = await supabase
-            .from("weekly_payouts")
-            .update({ total_usd: payout.total_usd + rewardUsd })
-            .eq("id", payout.id)
-            .eq("total_usd", payout.total_usd); // optimistic lock
+            .rpc("increment_payout_total", {
+              payout_id: payout.id,
+              amount: rewardUsd,
+              expected_total: payout.total_usd,
+            });
 
           if (!updatePayoutError) {
             success = true;

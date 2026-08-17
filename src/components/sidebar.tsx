@@ -63,12 +63,15 @@ export function Sidebar({ user }: { user: User }) {
             <p className="truncate text-[13px] font-semibold">@{user.x_username}</p>
           </div>
         </div>
-        <a
-          href="/api/auth/logout"
+        <button
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/";
+          }}
           className="mt-3 flex w-full items-center justify-center rounded-xl border border-border px-3 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-card-hover hover:text-foreground"
         >
           Log out
-        </a>
+        </button>
       </div>
     </aside>
   );

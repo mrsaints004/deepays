@@ -2,32 +2,20 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export async function GET() {
-  const checks: Record<string, "ok" | "error"> = {};
+  let dbOk = false;
 
-  // Check Supabase connectivity
   try {
     const supabase = createAdminClient();
     const { error } = await supabase.from("tasks").select("id").limit(1);
-    checks.database = error ? "error" : "ok";
+    dbOk = !error;
   } catch {
-    checks.database = "error";
+    // db unreachable
   }
 
-  // Check required env vars
-  const requiredVars = [
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "ADMIN_PASSWORD",
-    "ADMIN_SESSION_SECRET",
-    "CRON_SECRET",
-  ];
-  checks.env = requiredVars.every((v) => process.env[v]) ? "ok" : "error";
-
-  const healthy = Object.values(checks).every((v) => v === "ok");
+  const healthy = dbOk;
 
   return NextResponse.json(
-    { status: healthy ? "healthy" : "degraded", checks },
+    { status: healthy ? "healthy" : "degraded" },
     { status: healthy ? 200 : 503 }
   );
 }
