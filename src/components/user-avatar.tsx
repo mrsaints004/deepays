@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 const sizes = {
   sm: { px: 32, cls: "h-8 w-8", text: "text-xs", ring: "ring-2" },
@@ -22,28 +21,22 @@ export function UserAvatar({ username, avatarUrl, size = "sm", className = "" }:
   const initial = username?.charAt(0)?.toUpperCase() ?? "?";
   const diceBearUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username)}`;
 
-  if (avatarUrl && !error) {
-    return (
-      <Image
-        src={avatarUrl}
-        alt={username}
-        width={s.px}
-        height={s.px}
-        className={`rounded-full ${s.ring} ring-border ${className}`}
-        onError={() => setError(true)}
-      />
-    );
-  }
+  const imgSrc = avatarUrl && !error ? avatarUrl : diceBearUrl;
 
   return (
     <img
-      src={diceBearUrl}
-      alt={initial}
+      src={imgSrc}
+      alt={username}
       width={s.px}
       height={s.px}
       className={`rounded-full ${s.ring} ring-border ${className}`}
       onError={(e) => {
-        // Final fallback: replace with a div-like colored background
+        if (!error && avatarUrl) {
+          // First failure: fall back to DiceBear
+          setError(true);
+          return;
+        }
+        // Final fallback: DOM initial letter
         const target = e.currentTarget;
         target.style.display = "none";
         const div = document.createElement("div");
