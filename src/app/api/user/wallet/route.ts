@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { isValidEthAddress, checksumAddress } from "@/lib/crypto/validate";
 import { validateOrigin } from "@/lib/csrf";
 import { generalLimiter } from "@/lib/rate-limit";
@@ -42,7 +42,11 @@ export async function PUT(request: NextRequest) {
       { status: 400 }
     );
   }
-  const supabase = await createServerClient();
+
+  // Use admin client to bypass RLS — we already verified the user above.
+  // The anon-key client can fail when the auth session cookie is stale
+  // (e.g. in dApp browsers that don't forward cookies reliably).
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("users")
@@ -72,7 +76,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = await createServerClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("users")
