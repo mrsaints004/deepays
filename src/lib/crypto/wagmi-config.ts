@@ -20,7 +20,6 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 
 function buildConfig() {
   if (!projectId) {
-    // Fallback without WalletConnect — basic injected + coinbase only
     return createConfig({
       chains: [base],
       connectors: [
@@ -32,13 +31,15 @@ function buildConfig() {
     });
   }
 
-  // RainbowKit wallets for the modal (desktop / regular browser)
-  const rainbowKitConnectors = connectorsForWallets(
+  // Let RainbowKit manage ALL connectors — including the injected one.
+  // Do NOT add a separate injected() connector. Having both causes
+  // "connector already connected" errors across wallets.
+  const connectors = connectorsForWallets(
     [
       {
         groupName: "Popular",
         wallets: [
-          injectedWallet,   // MUST be first — catches dApp browser providers
+          injectedWallet,
           metaMaskWallet,
           okxWallet,
           trustWallet,
@@ -60,14 +61,8 @@ function buildConfig() {
     { appName: "Depay", projectId },
   );
 
-  // Merge RainbowKit connectors with a raw injected() connector.
-  // The raw injected() ensures window.ethereum is always available as a
-  // registered connector for direct dApp-browser connections.
   return createConfig({
-    connectors: [
-      injected({ shimDisconnect: true }),
-      ...rainbowKitConnectors,
-    ],
+    connectors,
     chains: [base],
     transports: { [base.id]: http() },
     ssr: true,

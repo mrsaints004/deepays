@@ -4,11 +4,6 @@ import { useState } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 
-function hasInjectedProvider(): boolean {
-  if (typeof window === "undefined") return false;
-  return !!(window as unknown as Record<string, unknown>).ethereum;
-}
-
 export function AdminWalletConnect() {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
@@ -23,16 +18,28 @@ export function AdminWalletConnect() {
     setConnecting(true);
 
     try {
-      if (hasInjectedProvider()) {
-        const injectedConnector =
-          connectors.find((c) => c.id === "injected") ||
-          connectors.find((c) => c.type === "injected") ||
-          connectors.find((c) => c.id === "metaMask") ||
-          connectors.find((c) => c.name.toLowerCase().includes("inject"));
+      // Already connected (auto-reconnect) — nothing to do
+      if (isConnected && address) return;
 
-        if (injectedConnector) {
+      const injectedConnector = connectors.find(
+        (c) => c.type === "injected" || c.id === "injected" || c.id === "io.metamask" || c.id === "metaMask"
+      );
+
+      if (injectedConnector) {
+        try {
           await connectAsync({ connector: injectedConnector });
           return;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          if (msg.toLowerCase().includes("already connected")) {
+            disconnect();
+            await new Promise((r) => setTimeout(r, 300));
+            await connectAsync({ connector: injectedConnector });
+            return;
+          }
+          if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied") || msg.toLowerCase().includes("user refused")) {
+            return;
+          }
         }
       }
 
@@ -46,7 +53,8 @@ export function AdminWalletConnect() {
       if (
         !msg.toLowerCase().includes("rejected") &&
         !msg.toLowerCase().includes("denied") &&
-        !msg.toLowerCase().includes("user refused")
+        !msg.toLowerCase().includes("user refused") &&
+        !msg.toLowerCase().includes("already connected")
       ) {
         setError(msg);
       }

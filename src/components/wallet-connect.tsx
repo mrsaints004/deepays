@@ -8,11 +8,6 @@ interface WalletConnectProps {
   currentAddress: string | null;
 }
 
-function hasInjectedProvider(): boolean {
-  if (typeof window === "undefined") return false;
-  return !!(window as unknown as Record<string, unknown>).ethereum;
-}
-
 export function WalletConnect({ currentAddress }: WalletConnectProps) {
   const [savedAddress, setSavedAddress] = useState(currentAddress);
   const [input, setInput] = useState("");
@@ -39,7 +34,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
         body: JSON.stringify({ address: addr }),
       });
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to save wallet");
       }
       const data = await res.json();
@@ -54,7 +49,8 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     }
   }, []);
 
-  // Auto-save when wagmi detects a connected wallet (from RainbowKit modal or direct connect)
+  // Auto-save when wagmi detects a connected wallet
+  // This handles: RainbowKit modal flow, auto-reconnection, and direct connect
   useEffect(() => {
     if (isConnected && connectedAddress && !savedAddress && !savingRef.current) {
       saveAddress(connectedAddress);
@@ -66,42 +62,62 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     setConnecting(true);
 
     try {
-      // If we're inside a dApp browser (OKX, Trust, MetaMask mobile, etc.),
-      // window.ethereum is injected by the host app.
-      // Find the registered injected connector from wagmi config and connect directly.
-      if (hasInjectedProvider()) {
-        // Find the injected connector from the REGISTERED connectors in wagmi config.
-        // We must use a registered connector — creating new injected() won't work.
-        const injectedConnector =
-          connectors.find((c) => c.id === "injected") ||
-          connectors.find((c) => c.type === "injected") ||
-          connectors.find((c) => c.id === "metaMask") ||
-          connectors.find((c) => c.name.toLowerCase().includes("inject"));
+      // 1. If wagmi already has a connection (auto-reconnect from previous session),
+      //    just save that address — don't try to connect again.
+      if (isConnected && connectedAddress) {
+        await saveAddress(connectedAddress);
+        return;
+      }
 
-        if (injectedConnector) {
+      // 2. Try to find and use an injected connector (dApp browsers).
+      //    Look through registered connectors for one that talks to window.ethereum.
+      const injectedConnector = connectors.find(
+        (c) => c.type === "injected" || c.id === "injected" || c.id === "io.metamask" || c.id === "metaMask"
+      );
+
+      if (injectedConnector) {
+        try {
           const result = await connectAsync({ connector: injectedConnector });
           if (result.accounts[0]) {
             await saveAddress(result.accounts[0]);
           }
           return;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          // "Connector already connected" means wagmi thinks this connector
+          // has an active session. Disconnect it first, then retry.
+          if (msg.toLowerCase().includes("already connected")) {
+            wagmiDisconnect();
+            // Small delay to let wagmi clean up state
+            await new Promise((r) => setTimeout(r, 300));
+            const retryResult = await connectAsync({ connector: injectedConnector });
+            if (retryResult.accounts[0]) {
+              await saveAddress(retryResult.accounts[0]);
+            }
+            return;
+          }
+          // User rejected — not an error
+          if (msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied") || msg.toLowerCase().includes("user refused")) {
+            return;
+          }
+          // For other errors from the injected connector, fall through to modal
         }
-        // If somehow no injected connector found in config, fall through to modal
       }
 
-      // Regular browser (desktop without extension, or mobile Safari/Chrome):
-      // Open RainbowKit modal for WalletConnect QR codes and deep links.
+      // 3. No injected connector or it failed — open RainbowKit modal.
+      //    This handles desktop browsers, WalletConnect QR, deep links.
       if (openConnectModal) {
         openConnectModal();
       } else {
-        setError("Open this page in your wallet app's browser, or paste your address.");
+        setError("Open this page in your wallet app's browser, or paste your address below.");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Connection failed";
-      // Don't show error for user-rejected — they just closed the popup
       if (
         !msg.toLowerCase().includes("rejected") &&
         !msg.toLowerCase().includes("denied") &&
-        !msg.toLowerCase().includes("user refused")
+        !msg.toLowerCase().includes("user refused") &&
+        !msg.toLowerCase().includes("already connected")
       ) {
         setError(msg);
       }
