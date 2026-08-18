@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { taskId, proofUrl } = await request.json();
+    const { taskId, proofUrl, proofImageUrl } = await request.json();
 
     if (!taskId || typeof taskId !== "string") {
       return NextResponse.json(
@@ -76,45 +76,80 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate proof URL (required for all categories)
-    if (!proofUrl || typeof proofUrl !== "string") {
-      return NextResponse.json(
-        { message: "Proof link is required" },
-        { status: 400 }
-      );
-    }
-
     const category = task.category || "engagement";
-    try {
-      const url = new URL(proofUrl);
-      if (url.protocol !== "https:") {
+
+    // Follow tasks require a screenshot upload instead of a URL
+    if (category === "follow") {
+      if (!proofImageUrl || typeof proofImageUrl !== "string") {
         return NextResponse.json(
-          { message: "Proof link must use HTTPS" },
+          { message: "Screenshot proof is required for follow tasks" },
           { status: 400 }
         );
       }
-      const allowedHosts = ["twitter.com", "www.twitter.com", "x.com", "www.x.com"];
-      if (!allowedHosts.includes(url.hostname)) {
-        return NextResponse.json(
-          { message: "Proof link must be a twitter.com or x.com URL" },
-          { status: 400 }
-        );
-      }
-      // Content tasks require a direct tweet link
-      if (category === "content") {
-        const tweetPattern = /^\/[a-zA-Z0-9_]{1,15}\/status\/\d+/;
-        if (!tweetPattern.test(url.pathname)) {
+      try {
+        const imgUrl = new URL(proofImageUrl);
+        if (imgUrl.protocol !== "https:") {
           return NextResponse.json(
-            { message: "Proof link must be a direct link to a tweet (e.g., https://x.com/user/status/123)" },
+            { message: "Invalid proof image URL" },
             { status: 400 }
           );
         }
+        // Validate it points to our Supabase storage
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        if (supabaseUrl && !proofImageUrl.startsWith(supabaseUrl)) {
+          return NextResponse.json(
+            { message: "Proof image must be uploaded through the app" },
+            { status: 400 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { message: "Invalid proof image URL" },
+          { status: 400 }
+        );
       }
-    } catch {
-      return NextResponse.json(
-        { message: "Invalid proof URL" },
-        { status: 400 }
-      );
+    } else {
+      // Non-follow tasks require a proof URL
+      if (!proofUrl || typeof proofUrl !== "string") {
+        return NextResponse.json(
+          { message: "Proof link is required" },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const url = new URL(proofUrl);
+        if (url.protocol !== "https:") {
+          return NextResponse.json(
+            { message: "Proof link must use HTTPS" },
+            { status: 400 }
+          );
+        }
+        if (category === "engagement" || category === "content") {
+          const allowedHosts = ["twitter.com", "www.twitter.com", "x.com", "www.x.com"];
+          if (!allowedHosts.includes(url.hostname)) {
+            return NextResponse.json(
+              { message: "Proof link must be a twitter.com or x.com URL" },
+              { status: 400 }
+            );
+          }
+        }
+        // Content tasks require a direct tweet link
+        if (category === "content") {
+          const tweetPattern = /^\/[a-zA-Z0-9_]{1,15}\/status\/\d+/;
+          if (!tweetPattern.test(url.pathname)) {
+            return NextResponse.json(
+              { message: "Proof link must be a direct link to a tweet (e.g., https://x.com/user/status/123)" },
+              { status: 400 }
+            );
+          }
+        }
+      } catch {
+        return NextResponse.json(
+          { message: "Invalid proof URL" },
+          { status: 400 }
+        );
+      }
     }
 
     // Check if already completed — use maybeSingle to avoid error on zero rows
@@ -139,8 +174,8 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         task_id: taskId,
         week_start: weekStart,
-        proof_url: proofUrl,
-        proof_image_url: null,
+        proof_url: category === "follow" ? null : proofUrl,
+        proof_image_url: category === "follow" ? proofImageUrl : null,
         review_status: "pending_review",
       });
 

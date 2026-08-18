@@ -147,7 +147,7 @@ export function TasksManager({ initialTasks }: TasksManagerProps) {
       {showPanel && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={resetForm} />
-          <div className="relative w-full max-w-lg bg-card border-l border-border h-full overflow-y-auto p-6 space-y-5 animate-in shadow-soft-xl">
+          <div className="relative w-full max-w-lg bg-card border-l border-border h-full overflow-y-auto p-6 pb-10 space-y-5 animate-in shadow-soft-xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">{editingTask ? "Edit Task" : "New Task"}</h2>
               <button onClick={resetForm} className="rounded-lg p-2 text-muted hover:bg-card-hover hover:text-foreground transition-colors"><X size={20} /></button>

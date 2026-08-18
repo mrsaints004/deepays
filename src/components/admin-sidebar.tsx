@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ListTodo, Users, Wallet, ClipboardCheck, LogOut, Menu, X } from "lucide-react";
+import { AdminWalletConnect } from "@/components/admin-wallet-connect";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -98,6 +99,14 @@ export function AdminSidebar({ pendingReviewCount = 0 }: AdminSidebarProps) {
           </div>
           <span className="text-[14px] font-semibold tracking-tight">Admin</span>
         </div>
+        <div className="ml-auto">
+          <AdminWalletConnect />
+        </div>
+      </div>
+
+      {/* Desktop wallet connect */}
+      <div className="hidden lg:block fixed top-4 right-8 z-40">
+        <AdminWalletConnect />
       </div>
 
       {/* Desktop sidebar */}

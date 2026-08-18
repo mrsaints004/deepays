@@ -50,19 +50,38 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     }
   }, []);
 
+  // Track whether we're actively changing to a new wallet
+  const changingWalletRef = useRef(false);
+
   // Auto-save when wagmi connects a wallet.
   // Only fires once — if save fails, saveFailedRef prevents infinite retries.
+  // Also fires when changingWalletRef is true (user chose "Change Wallet").
   useEffect(() => {
     if (
       isConnected &&
       connectedAddress &&
-      !savedAddress &&
       !savingRef.current &&
-      !saveFailedRef.current
+      !saveFailedRef.current &&
+      (!savedAddress || changingWalletRef.current)
     ) {
+      changingWalletRef.current = false;
       saveAddress(connectedAddress);
     }
   }, [isConnected, connectedAddress, savedAddress, saveAddress]);
+
+  function handleChangeWallet() {
+    setError("");
+    saveFailedRef.current = false;
+    changingWalletRef.current = true;
+    // Disconnect current wagmi connection first so modal allows picking a new wallet
+    wagmiDisconnect();
+    if (openConnectModal) {
+      openConnectModal();
+    } else {
+      setError("Could not open wallet picker.");
+      changingWalletRef.current = false;
+    }
+  }
 
   function handleConnect() {
     setError("");
@@ -122,13 +141,22 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
               {savedAddress.slice(0, 6)}...{savedAddress.slice(-4)}
             </p>
           </div>
-          <button
-            onClick={disconnect}
-            disabled={saving}
-            className="rounded-xl border border-border px-4 py-2 text-[13px] font-semibold text-muted hover:text-danger hover:border-danger/30 transition-colors disabled:opacity-50"
-          >
-            {saving ? "..." : "Disconnect"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleChangeWallet}
+              disabled={saving}
+              className="rounded-xl border border-border px-4 py-2 text-[13px] font-semibold text-muted hover:text-accent hover:border-accent/30 transition-colors disabled:opacity-50"
+            >
+              {saving ? "..." : "Change"}
+            </button>
+            <button
+              onClick={disconnect}
+              disabled={saving}
+              className="rounded-xl border border-border px-4 py-2 text-[13px] font-semibold text-muted hover:text-danger hover:border-danger/30 transition-colors disabled:opacity-50"
+            >
+              {saving ? "..." : "Disconnect"}
+            </button>
+          </div>
         </div>
         {error && (
           <p className="mt-2 text-[12px] text-danger">{error}</p>

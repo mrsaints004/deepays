@@ -49,6 +49,9 @@ next-env.d.ts
 CLAUDE.md
 AGENTS.md
 
+# Supabase migration bundle (contains full schema — run manually)
+supabase/run-all-migrations.sql
+
 # IDE / editor
 .vscode/
 .idea/

@@ -42,7 +42,7 @@ export function EarnContent({ tasks, completions, userId, participantCounts }: E
   const approvedTasks = filteredTasks.filter((t) => completedMap.get(t.id) === "approved");
   const rejectedTasks = filteredTasks.filter((t) => completedMap.get(t.id) === "rejected");
 
-  async function handleComplete(taskId: string, proof: { proofUrl?: string }) {
+  async function handleComplete(taskId: string, proof: { proofUrl?: string; proofImageUrl?: string }) {
     const res = await fetch("/api/tasks/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
