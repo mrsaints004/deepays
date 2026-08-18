@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://pbs.twimg.com https://abs.twimg.com https://*.supabase.co https://api.dicebear.com https://*.walletconnect.com",
+              "img-src 'self' data: blob: https: ",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://mainnet.base.org https://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org https://rpc.walletconnect.com https://rpc.walletconnect.org https://explorer-api.walletconnect.com https://*.web3modal.org https://*.web3modal.com https://*.reown.com https://*.sentry.io",
               "frame-src https://*.walletconnect.com https://*.walletconnect.org https://*.web3modal.org https://*.web3modal.com https://*.reown.com",

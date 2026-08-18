@@ -15,6 +15,8 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const savingRef = useRef(false);
+  // Prevent infinite retry loop: if save fails, don't auto-retry from useEffect
+  const saveFailedRef = useRef(false);
 
   const { openConnectModal } = useConnectModal();
   const { address: connectedAddress, isConnected } = useAccount();
@@ -23,6 +25,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
   const saveAddress = useCallback(async (addr: string) => {
     if (savingRef.current) return;
     savingRef.current = true;
+    saveFailedRef.current = false;
     setSaving(true);
     setError("");
     try {
@@ -39,6 +42,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
       setMode("idle");
       setInput("");
     } catch (err) {
+      saveFailedRef.current = true;
       setError(err instanceof Error ? err.message : "Failed to save wallet");
     } finally {
       setSaving(false);
@@ -46,30 +50,32 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
     }
   }, []);
 
-  // Auto-save when wagmi detects a connected wallet.
-  // This fires after RainbowKit modal completes, after auto-reconnect,
-  // or after any other connection method.
+  // Auto-save when wagmi connects a wallet.
+  // Only fires once — if save fails, saveFailedRef prevents infinite retries.
   useEffect(() => {
-    if (isConnected && connectedAddress && !savedAddress && !savingRef.current) {
+    if (
+      isConnected &&
+      connectedAddress &&
+      !savedAddress &&
+      !savingRef.current &&
+      !saveFailedRef.current
+    ) {
       saveAddress(connectedAddress);
     }
   }, [isConnected, connectedAddress, savedAddress, saveAddress]);
 
   function handleConnect() {
     setError("");
+    // Reset the failure flag so user can retry manually
+    saveFailedRef.current = false;
 
-    // If wagmi already has a connection (auto-reconnect from previous session),
-    // just save it directly.
+    // If wagmi already has a connection, just save it
     if (isConnected && connectedAddress) {
       saveAddress(connectedAddress);
       return;
     }
 
-    // Open RainbowKit modal — it handles everything:
-    // - In dApp browsers: shows the injected wallet at the top, one tap to connect
-    // - On desktop: shows wallet list + WalletConnect QR
-    // - On mobile browsers: shows deep links to wallet apps
-    // After the user connects, useEffect above auto-saves the address.
+    // Open RainbowKit modal — handles all wallet types
     if (openConnectModal) {
       openConnectModal();
     } else {
@@ -80,6 +86,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
   async function disconnect() {
     setSaving(true);
     setError("");
+    saveFailedRef.current = false;
     try {
       const res = await fetch("/api/user/wallet", { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to disconnect");
@@ -99,6 +106,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
       setError("Invalid Ethereum address");
       return;
     }
+    saveFailedRef.current = false;
     saveAddress(trimmed);
   }
 
