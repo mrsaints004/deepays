@@ -3,8 +3,17 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { verifyAdmin } from "@/lib/admin-auth";
 import { validateOrigin } from "@/lib/csrf";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JsonBody = Record<string, any>;
+interface TaskBody {
+  id?: string;
+  title?: string;
+  description?: string;
+  action_url?: string;
+  reward_usd?: number | string;
+  status?: string;
+  category?: string;
+  expires_at?: string;
+  max_participants?: number | string | null;
+}
 
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
@@ -14,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: JsonBody;
+  let body: TaskBody;
   try {
     body = await request.json();
   } catch {
@@ -24,6 +33,12 @@ export async function POST(request: NextRequest) {
   // Validate required fields
   if (!body.title || typeof body.title !== "string" || body.title.trim().length === 0) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+  if (body.title.length > 500) {
+    return NextResponse.json({ error: "Title cannot exceed 500 characters" }, { status: 400 });
+  }
+  if (body.description && typeof body.description === "string" && body.description.length > 5000) {
+    return NextResponse.json({ error: "Description cannot exceed 5000 characters" }, { status: 400 });
   }
   if (!body.action_url || typeof body.action_url !== "string") {
     return NextResponse.json({ error: "Action URL is required" }, { status: 400 });
@@ -35,6 +50,8 @@ export async function POST(request: NextRequest) {
   if (rewardUsd > 100000) {
     return NextResponse.json({ error: "Reward cannot exceed $100,000" }, { status: 400 });
   }
+  // Clamp to 2 decimal places for USD precision
+  const rewardClamped = Math.round(rewardUsd * 100) / 100;
 
   // Validate action URL format
   try {
@@ -45,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   // Validate max_participants if provided
   if (body.max_participants != null && body.max_participants !== "") {
-    const mp = parseInt(body.max_participants, 10);
+    const mp = parseInt(String(body.max_participants), 10);
     if (isNaN(mp) || mp < 1 || mp > 100000) {
       return NextResponse.json({ error: "Max participants must be between 1 and 100,000" }, { status: 400 });
     }
@@ -59,13 +76,13 @@ export async function POST(request: NextRequest) {
       title: body.title.trim(),
       description: (body.description || "").trim(),
       action_url: body.action_url.trim(),
-      reward_usd: rewardUsd,
+      reward_usd: rewardClamped,
       status: "active",
-      category: ["engagement", "follow", "content", "other"].includes(body.category) ? body.category : "engagement",
+      category: ["engagement", "follow", "content", "other"].includes(body.category ?? "") ? body.category : "engagement",
       expires_at: body.expires_at
         ? new Date(body.expires_at).toISOString()
         : null,
-      max_participants: body.max_participants ? Math.min(parseInt(body.max_participants, 10), 100000) : null,
+      max_participants: body.max_participants ? Math.min(parseInt(String(body.max_participants), 10), 100000) : null,
     })
     .select()
     .single();
@@ -92,7 +109,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: JsonBody;
+  let body: TaskBody;
   try {
     body = await request.json();
   } catch {
@@ -122,8 +139,20 @@ export async function PUT(request: NextRequest) {
   const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {};
-  if (body.title !== undefined) updateData.title = String(body.title).trim();
-  if (body.description !== undefined) updateData.description = String(body.description).trim();
+  if (body.title !== undefined) {
+    const trimmedTitle = String(body.title).trim();
+    if (trimmedTitle.length === 0 || trimmedTitle.length > 500) {
+      return NextResponse.json({ error: "Title must be between 1 and 500 characters" }, { status: 400 });
+    }
+    updateData.title = trimmedTitle;
+  }
+  if (body.description !== undefined) {
+    const trimmedDesc = String(body.description).trim();
+    if (trimmedDesc.length > 5000) {
+      return NextResponse.json({ error: "Description cannot exceed 5000 characters" }, { status: 400 });
+    }
+    updateData.description = trimmedDesc;
+  }
   if (body.action_url !== undefined) {
     try { new URL(body.action_url); } catch {
       return NextResponse.json({ error: "Invalid action URL" }, { status: 400 });
@@ -133,7 +162,7 @@ export async function PUT(request: NextRequest) {
   if (body.reward_usd !== undefined) updateData.reward_usd = body.reward_usd;
   if (body.status !== undefined) updateData.status = body.status;
   if (body.category !== undefined) {
-    if (!["engagement", "follow", "content", "other"].includes(body.category)) {
+    if (!["engagement", "follow", "content", "other"].includes(body.category ?? "")) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
     updateData.category = body.category;
@@ -145,7 +174,7 @@ export async function PUT(request: NextRequest) {
   }
   if (body.max_participants !== undefined) {
     if (body.max_participants != null && body.max_participants !== "" && body.max_participants !== null) {
-      const mp = parseInt(body.max_participants, 10);
+      const mp = parseInt(String(body.max_participants), 10);
       if (isNaN(mp) || mp < 1 || mp > 100000) {
         return NextResponse.json({ error: "Max participants must be between 1 and 100,000" }, { status: 400 });
       }

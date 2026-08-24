@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getWeekStart } from "@/lib/utils";
-import { sendUSDC, getTreasuryBalance, waitForConfirmation, checkTxOnChain, getTreasuryNonce } from "@/lib/crypto/payout";
+import { sendUSDC, getTreasuryBalance, waitForConfirmation, checkTxOnChain, getTreasuryNonce, validateTreasurySetup } from "@/lib/crypto/payout";
 import { notifyPayoutSent, notifyPayoutFailure } from "@/lib/email";
 import crypto from "crypto";
 
@@ -46,6 +46,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Pre-flight: verify treasury key is valid and account holds USDC
+    try {
+      const treasury = await validateTreasurySetup();
+      console.log(`[payout] Treasury validated: ${treasury.address} — ${treasury.balanceUSDC} USDC`);
+    } catch (treasuryErr) {
+      const msg = treasuryErr instanceof Error ? treasuryErr.message : "Treasury validation failed";
+      console.error(`[payout] Treasury validation failed: ${msg}`);
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+
     // Get the previous week's start
     const now = new Date();
     const previousWeekDate = new Date(now);
@@ -221,7 +231,7 @@ export async function GET(request: NextRequest) {
 
           // Notify user of payout
           if (userEmail) {
-            notifyPayoutSent(userEmail, payout.total_usd, txHash).catch(() => {});
+            notifyPayoutSent(userEmail, payout.total_usd, txHash).catch((err) => console.error("[payout] Email notification failed:", err));
           }
 
           results.push({ user: username, status: "confirmed", tx_hash: txHash });
@@ -273,7 +283,7 @@ export async function GET(request: NextRequest) {
         failures.length,
         results.length,
         failures.map((f) => ({ user: f.user, error: f.error || "Unknown" }))
-      ).catch(() => {});
+      ).catch((err) => console.error("[payout] Email notification failed:", err));
     }
 
     return NextResponse.json({

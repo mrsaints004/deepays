@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
@@ -38,9 +39,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-dvh items-center justify-center px-6">
       <div className="w-full max-w-sm animate-in">
         <div className="flex flex-col items-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground">
-            <span className="text-lg font-bold text-white">D</span>
-          </div>
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={48} height={48} className="rounded-xl" />
           <h1 className="mt-4 text-lg font-bold">Admin Access</h1>
         </div>
 
@@ -51,6 +50,7 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter admin password"
+              aria-label="Admin password"
               className="w-full rounded-xl border border-border bg-white px-4 py-3 text-[14px] outline-none transition-colors focus:border-foreground"
               autoFocus
             />

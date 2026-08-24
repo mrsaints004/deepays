@@ -7,7 +7,7 @@ import { notifyTaskApproved, notifyTaskRejected } from "@/lib/email";
 
 export async function GET() {
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -23,7 +23,7 @@ export async function GET() {
     if (error) {
       console.error("Failed to fetch reviews:", error);
       return NextResponse.json(
-        { message: "Failed to fetch reviews" },
+        { error: "Failed to fetch reviews" },
         { status: 500 }
       );
     }
@@ -32,7 +32,7 @@ export async function GET() {
   } catch (err) {
     console.error("Reviews GET error:", err);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -40,10 +40,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   if (!(await verifyAdmin())) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -51,14 +51,14 @@ export async function POST(request: NextRequest) {
 
     if (!completionId || typeof completionId !== "string") {
       return NextResponse.json(
-        { message: "Missing or invalid completionId" },
+        { error: "Missing or invalid completionId" },
         { status: 400 }
       );
     }
 
     if (action !== "approve" && action !== "reject") {
       return NextResponse.json(
-        { message: "Action must be 'approve' or 'reject'" },
+        { error: "Action must be 'approve' or 'reject'" },
         { status: 400 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     if (!completion) {
       return NextResponse.json(
-        { message: "Completion not found or already reviewed" },
+        { error: "Completion not found or already reviewed" },
         { status: 404 }
       );
     }
@@ -95,19 +95,21 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json(
-        { message: "Failed to update review" },
+        { error: "Failed to update review" },
         { status: 500 }
       );
     }
 
     // On approve, upsert weekly_payouts
     if (action === "approve") {
-      const task = completion.tasks as { reward_usd: number } | null;
-      const rewardUsd = task?.reward_usd ?? 0;
-
-      if (rewardUsd <= 0) {
-        return NextResponse.json({ success: true });
+      const task = completion.tasks as { reward_usd: number; title: string } | null;
+      if (!task || !Number.isFinite(task.reward_usd) || task.reward_usd <= 0) {
+        return NextResponse.json(
+          { message: "Cannot approve: task not found or has no reward" },
+          { status: 400 }
+        );
       }
+      const rewardUsd = task.reward_usd;
 
       const weekStart = completion.week_start || getWeekStart();
 
@@ -135,6 +137,16 @@ export async function POST(request: NextRequest) {
 
           if (!updatePayoutError) {
             success = true;
+          } else if (
+            updatePayoutError.message?.includes("does not exist") ||
+            updatePayoutError.message?.includes("function")
+          ) {
+            // RPC function missing — database migration incomplete
+            console.error("increment_payout_total RPC not found — run migrations");
+            return NextResponse.json(
+              { message: "Database configuration error" },
+              { status: 500 }
+            );
           } else {
             retries++;
             // Brief delay before retry
@@ -173,7 +185,7 @@ export async function POST(request: NextRequest) {
       const userEmail = (completion.users as { email: string | null } | null)?.email;
       const taskTitle = (completion.tasks as { reward_usd: number; title: string } | null)?.title ?? "Task";
       if (userEmail) {
-        notifyTaskApproved(userEmail, taskTitle, rewardUsd).catch(() => {});
+        notifyTaskApproved(userEmail, taskTitle, rewardUsd).catch((err) => console.error("[reviews] Email notification failed:", err));
       }
     }
 
@@ -190,14 +202,14 @@ export async function POST(request: NextRequest) {
       const taskTitle = (completion.tasks as { reward_usd: number; title: string } | null)?.title ?? "Task";
       const reviewNote = note && typeof note === "string" ? note.slice(0, 500) : undefined;
       if (userEmail) {
-        notifyTaskRejected(userEmail, taskTitle, reviewNote).catch(() => {});
+        notifyTaskRejected(userEmail, taskTitle, reviewNote).catch((err) => console.error("[reviews] Email notification failed:", err));
       }
     }
 
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { message: "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

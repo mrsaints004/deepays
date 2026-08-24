@@ -7,8 +7,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
-  const supabase = await createServerClient();
-  await supabase.auth.signOut();
+  try {
+    const supabase = await createServerClient();
+    const { error } = await supabase.auth.signOut();
 
-  return NextResponse.json({ success: true });
+    if (error) {
+      console.error("Logout failed:", error.message);
+      return NextResponse.json({ error: "Failed to sign out" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

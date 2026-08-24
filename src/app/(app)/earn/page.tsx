@@ -30,18 +30,21 @@ export default async function EarnPage() {
     review_status: "pending_review" | "approved" | "rejected";
   }>;
 
-  // Fetch participant counts for tasks that have a limit
+  // Fetch participant counts for tasks that have a limit (batched, not N+1)
   const tasksWithLimits = tasks.filter((t) => t.max_participants != null);
   const participantCounts: Record<string, number> = {};
 
   if (tasksWithLimits.length > 0) {
-    // Fetch counts for all limited tasks
-    for (const task of tasksWithLimits) {
-      const { count } = await supabase
-        .from("completions")
-        .select("id", { count: "exact", head: true })
-        .eq("task_id", task.id);
-      participantCounts[task.id] = count ?? 0;
+    const taskIds = tasksWithLimits.map((t) => t.id);
+    const { data: countRows } = await supabase
+      .from("completions")
+      .select("task_id")
+      .in("task_id", taskIds);
+
+    if (countRows) {
+      for (const row of countRows) {
+        participantCounts[row.task_id] = (participantCounts[row.task_id] ?? 0) + 1;
+      }
     }
   }
 

@@ -33,6 +33,17 @@ if (missing.length > 0 && process.env.NODE_ENV === "development") {
   );
 }
 
+// Validate ADMIN_SESSION_SECRET format (must be 64-char hex string)
+const sessionSecret = process.env.ADMIN_SESSION_SECRET;
+if (sessionSecret && !/^[a-fA-F0-9]{64}$/.test(sessionSecret)) {
+  const msg = "ADMIN_SESSION_SECRET must be a 64-character hex string. Generate one with: openssl rand -hex 32";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(msg);
+  } else {
+    console.warn(`[env] ${msg}`);
+  }
+}
+
 const missingOptional = optional.filter((key) => !process.env[key]);
 if (missingOptional.length > 0 && process.env.NODE_ENV === "development") {
   console.warn(

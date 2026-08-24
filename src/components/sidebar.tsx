@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
@@ -13,9 +14,7 @@ export function Sidebar({ user }: { user: User }) {
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-border bg-white lg:flex lg:flex-col">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-border px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-          <span className="text-sm font-bold text-white tracking-tight">D</span>
-        </div>
+        <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
         <span className="text-[15px] font-semibold tracking-tight">Depay</span>
       </div>
 

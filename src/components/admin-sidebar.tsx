@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { LayoutDashboard, ListTodo, Users, Wallet, ClipboardCheck, LogOut, Menu, X } from "lucide-react";
 import { AdminWalletConnect } from "@/components/admin-wallet-connect";
 
@@ -32,9 +33,7 @@ export function AdminSidebar({ pendingReviewCount = 0 }: AdminSidebarProps) {
       {/* Logo */}
       <div className="flex h-14 items-center justify-between border-b border-white/8 px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-            <span className="text-sm font-bold text-white">D</span>
-          </div>
+          <Image src="/Deepay_logo_option_1.png" alt="Depay" width={32} height={32} className="rounded-lg" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
             Depay Admin
           </span>
@@ -94,9 +93,7 @@ export function AdminSidebar({ pendingReviewCount = 0 }: AdminSidebarProps) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent">
-            <span className="text-xs font-bold text-white">D</span>
-          </div>
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={28} height={28} className="rounded-lg" />
           <span className="text-[14px] font-semibold tracking-tight">Admin</span>
         </div>
         <div className="ml-auto">

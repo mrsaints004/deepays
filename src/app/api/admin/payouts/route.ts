@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
   if (!week) {
     return NextResponse.json({ error: "Missing week parameter" }, { status: 400 });
   }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(week)) {
+    return NextResponse.json({ error: "Invalid week format. Expected YYYY-MM-DD" }, { status: 400 });
+  }
 
   try {
     const supabase = createAdminClient();
@@ -126,8 +129,14 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      // Validate amount precision before sending
+      if (!Number.isFinite(payout.total_usd) || payout.total_usd <= 0) {
+        results.push({ payoutId, success: false, error: "Invalid payout amount" });
+        continue;
+      }
+
       // Create payout_transactions record
-      const { data: txRecord } = await supabase
+      const { data: txRecord, error: txInsertErr } = await supabase
         .from("payout_transactions")
         .insert({
           payout_id: payoutId,
@@ -139,28 +148,31 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
+      if (txInsertErr || !txRecord) {
+        // Revert payout status since we couldn't create the tx record
+        await supabase.from("weekly_payouts").update({ status: "pending" }).eq("id", payoutId);
+        results.push({ payoutId, success: false, error: "Failed to create transaction record" });
+        continue;
+      }
+
       try {
         // Send USDC
         const txHash = await sendUSDC(walletAddress, payout.total_usd);
 
         // Update transaction as submitted
-        if (txRecord) {
-          await supabase
-            .from("payout_transactions")
-            .update({ status: "submitted", tx_hash: txHash })
-            .eq("id", txRecord.id);
-        }
+        await supabase
+          .from("payout_transactions")
+          .update({ status: "submitted", tx_hash: txHash })
+          .eq("id", txRecord.id);
 
         // Wait for confirmation
         await waitForConfirmation(txHash);
 
         // Update transaction as confirmed
-        if (txRecord) {
-          await supabase
-            .from("payout_transactions")
-            .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-            .eq("id", txRecord.id);
-        }
+        await supabase
+          .from("payout_transactions")
+          .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+          .eq("id", txRecord.id);
 
         // Update weekly payout as paid
         await supabase
@@ -300,6 +312,19 @@ export async function PATCH(request: NextRequest) {
   if (action === "confirm") {
     if (!txHash || typeof txHash !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
       return NextResponse.json({ error: "Missing or invalid txHash" }, { status: 400 });
+    }
+
+    // Verify the tx exists on-chain before confirming
+    try {
+      const onChainResult = await checkTxOnChain(txHash);
+      if (!onChainResult) {
+        return NextResponse.json({ error: "Transaction not found on-chain yet — try again shortly" }, { status: 400 });
+      }
+      if (onChainResult.status === "reverted") {
+        return NextResponse.json({ error: "Transaction was reverted on-chain" }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Failed to verify transaction on-chain" }, { status: 500 });
     }
 
     // Update payout_transactions

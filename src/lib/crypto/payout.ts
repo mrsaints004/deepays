@@ -3,9 +3,46 @@ import { getPublicClient, getTreasuryWalletClient } from "./client";
 import { USDC_ADDRESS, USDC_DECIMALS, ERC20_ABI } from "./config";
 import { isValidEthAddress } from "./validate";
 
-const TX_CONFIRMATION_TIMEOUT = 120_000; // 120 seconds — Base L2 can be slow under congestion
+const TX_CONFIRMATION_TIMEOUT = 180_000; // 180 seconds — Base L2 can be slow under congestion
 const MAX_SINGLE_PAYOUT = Number(process.env.MAX_SINGLE_PAYOUT) || 10_000;
 const MAX_GAS_PRICE_GWEI = 50; // Safety cap: reject if gas price exceeds this on Base
+
+/**
+ * Pre-flight check: verify the treasury private key is configured, the derived
+ * account can be resolved, and the account holds a non-zero USDC balance.
+ * Call this before processing payouts to fail fast on misconfiguration.
+ */
+export async function validateTreasurySetup(): Promise<{
+  address: string;
+  balanceUSDC: number;
+}> {
+  if (!process.env.TREASURY_PRIVATE_KEY) {
+    throw new Error(
+      "TREASURY_PRIVATE_KEY is not configured — cannot process payouts"
+    );
+  }
+
+  // This will throw if the key is malformed (regex validation inside)
+  const { account } = getTreasuryWalletClient();
+
+  const publicClient = getPublicClient();
+  const rawBalance = await publicClient.readContract({
+    address: USDC_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [account.address],
+  });
+
+  const balanceUSDC = parseFloat(formatUnits(rawBalance, USDC_DECIMALS));
+
+  if (balanceUSDC <= 0) {
+    throw new Error(
+      `Treasury account ${account.address} has zero USDC balance — cannot process payouts`
+    );
+  }
+
+  return { address: account.address, balanceUSDC };
+}
 
 export async function sendUSDC(
   toAddress: string,

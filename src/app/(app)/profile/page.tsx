@@ -86,7 +86,7 @@ export default async function ProfilePage() {
         <div className="mt-6 flex-1 lg:mt-0">
           <div className="rounded-2xl bg-hero p-6 text-center shadow-soft-lg animate-pop" style={{ animationDelay: '100ms' }}>
             <p className="text-[13px] font-medium text-white/50">This week (approved)</p>
-            <p className="mt-1 text-4xl font-bold tabular-nums text-emerald-400">{formatUSD(calculatedTotal)}</p>
+            <p className="mt-1 text-4xl font-bold tabular-nums text-gold-400">{formatUSD(calculatedTotal)}</p>
             <p className="mt-2 text-[12px] text-white/30">Resets every Monday at 00:00 UTC</p>
           </div>
 

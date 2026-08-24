@@ -36,16 +36,21 @@ async function sendViaResend(payload: EmailPayload): Promise<boolean> {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "Depay <noreply@depay.app>",
+        from: process.env.EMAIL_FROM || "Depay <noreply@deepays.xyz>",
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
       }),
     });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      console.error(`[email] Resend API error (${res.status}):`, body);
+    }
+
     return res.ok;
-  } catch {
-    // Log but don't fail the parent operation
-    console.error("Failed to send email via Resend");
+  } catch (err) {
+    console.error("[email] Failed to send via Resend:", err);
     return false;
   }
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { UserAvatar } from "@/components/user-avatar";
 import type { User } from "@/lib/types/database";
 
@@ -7,9 +8,7 @@ export function TopBar({ user }: { user: User }) {
     <header className="sticky top-0 z-40 glass border-b border-border/50">
       <div className="mx-auto flex h-14 items-center justify-between px-5">
         <Link href="/earn" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-            <span className="text-sm font-bold text-white tracking-tight">D</span>
-          </div>
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
           <span className="text-[15px] font-semibold tracking-tight">Depay</span>
         </Link>
 

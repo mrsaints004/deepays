@@ -1,21 +1,69 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafbfc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-hover: #f8fafc;
-  --border: #e2e8f0;
-  --muted: #64748b;
-  --accent: #059669;
-  --accent-foreground: #ffffff;
-  --accent-light: #ecfdf5;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* ── DeePay Brand Palette ── */
+
+  /* Navy (primary dark) */
+  --navy-950: #001A33;
+  --navy-900: #002B4D;
+  --navy-800: #003D66;
+  --navy-700: #004F80;
+  --navy-600: #006199;
+  --navy-500: #0073B3;
+  --navy-400: #3391C2;
+  --navy-300: #66AFD1;
+  --navy-200: #99CDE0;
+  --navy-100: #CCEBF0;
+  --navy-50:  #E6F5FA;
+
+  /* Cerulean (accent / CTA) */
+  --cerulean-700: #005F7F;
+  --cerulean-600: #006D93;
+  --cerulean-500: #007BA7;
+  --cerulean-400: #339BC0;
+  --cerulean-300: #66BAD8;
+  --cerulean-200: #99D9EB;
+  --cerulean-100: #C2E9F4;
+  --cerulean-50:  #E3F4FC;
+
+  /* Gold (earnings / highlights) */
+  --gold-700: #B8860B;
+  --gold-400: #FFC857;
+  --gold-50:  #FFF8E7;
+
+  /* Neutral */
+  --neutral-900: #111827;
+  --neutral-800: #1F2937;
+  --neutral-700: #374151;
+  --neutral-600: #5C6B80;
+  --neutral-500: #6B7280;
+  --neutral-400: #9CA3AF;
+  --neutral-300: #BCC3CE;
+  --neutral-200: #D6DCE5;
+  --neutral-100: #EDF0F4;
+  --neutral-50:  #F5F7FA;
+  --neutral-0:   #FFFFFF;
+
+  /* Semantic */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger:  #DC2626;
+  --info:    var(--cerulean-500);
+
+  /* ── Mapped Tokens (consumed by components) ── */
+  --background: #FFFFFF;
+  --foreground: #1F2937;
+  --card: #FFFFFF;
+  --card-hover: #F5F7FA;
+  --border: #D6DCE5;
+  --muted: #5C6B80;
+  --accent: #007BA7;
+  --accent-foreground: #FFFFFF;
+  --accent-light: #E3F4FC;
 }
 
 @theme inline {
+  /* Mapped semantic tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,6 +76,50 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Navy scale */
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-navy-600: var(--navy-600);
+  --color-navy-500: var(--navy-500);
+  --color-navy-400: var(--navy-400);
+  --color-navy-300: var(--navy-300);
+  --color-navy-200: var(--navy-200);
+  --color-navy-100: var(--navy-100);
+  --color-navy-50:  var(--navy-50);
+
+  /* Cerulean scale */
+  --color-cerulean-700: var(--cerulean-700);
+  --color-cerulean-600: var(--cerulean-600);
+  --color-cerulean-500: var(--cerulean-500);
+  --color-cerulean-400: var(--cerulean-400);
+  --color-cerulean-300: var(--cerulean-300);
+  --color-cerulean-200: var(--cerulean-200);
+  --color-cerulean-100: var(--cerulean-100);
+  --color-cerulean-50:  var(--cerulean-50);
+
+  /* Gold scale */
+  --color-gold-700: var(--gold-700);
+  --color-gold-400: var(--gold-400);
+  --color-gold-50:  var(--gold-50);
+
+  /* Neutral scale */
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-50:  var(--neutral-50);
+  --color-neutral-0:   var(--neutral-0);
+
+  /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -77,28 +169,28 @@ html {
 .glass-dark {
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(0, 26, 51, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Solid dark hero — no gaudy gradients */
+/* Solid dark hero — navy */
 .bg-hero {
-  background: #0f172a;
+  background: #001A33;
 }
 
 /* Dark section background */
 .gradient-dark {
-  background: #0f172a;
+  background: #001A33;
 }
 
-/* Accent button fill — solid emerald, no gradient */
+/* Accent button fill — solid cerulean, no gradient */
 .bg-accent-fill {
   background: var(--accent);
 }
 
-/* Earnings emphasis — slightly lighter green */
+/* Earnings emphasis — gold highlight */
 .bg-earnings {
-  background: #10b981;
+  background: var(--gold-400);
 }
 
 /* Enhanced shadows */

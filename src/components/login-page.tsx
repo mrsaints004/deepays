@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 
 const testimonials = [
@@ -89,7 +90,7 @@ export function LoginPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ message: "Server error" }));
 
       if (!res.ok) {
         setError(data.message || "Something went wrong");
@@ -233,11 +234,7 @@ export function LoginPage() {
       <nav className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-              <span className="text-sm font-bold text-white tracking-tight">
-                D
-              </span>
-            </div>
+            <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
             <span className="text-[15px] font-semibold tracking-tight text-foreground">
               Depay
             </span>
@@ -553,9 +550,7 @@ export function LoginPage() {
         <div className="mx-auto max-w-6xl px-5 py-10">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground">
-                <span className="text-xs font-bold text-white tracking-tight">D</span>
-              </div>
+              <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={28} height={28} className="rounded-lg" />
               <span className="text-[13px] text-muted">&copy; {new Date().getFullYear()} Depay. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-4">

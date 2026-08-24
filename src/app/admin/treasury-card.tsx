@@ -23,7 +23,7 @@ export function TreasuryCard() {
     : "—";
 
   return (
-    <div className="rounded-2xl bg-card p-5 border border-border shadow-soft-sm border-l-4 border-l-emerald-500">
+    <div className="rounded-2xl bg-card p-5 border border-border shadow-soft-sm border-l-4 border-l-cerulean-500">
       <p className="text-[12px] font-medium text-muted uppercase tracking-wider">Treasury USDC</p>
       {isConnected ? (
         <p className="mt-1 text-2xl font-bold tabular-nums">{balance}</p>
