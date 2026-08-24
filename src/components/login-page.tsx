@@ -7,32 +7,28 @@ import { supabase } from "@/lib/supabase/client";
 
 const testimonials = [
   {
-    name: "Sara Nguyen",
-    handle: "CEO, Luminar Labs",
-    quote: "We ran a product launch through Depay and got 3x the engagement we normally see. Real accounts, real interactions — not the bot farms you get elsewhere.",
-    metric: "3x engagement",
-    seed: "Sara",
+    name: "David",
+    handle: "Growth Lead, Agentic Ai",
+    quote: "Depay gave us a real edge for our launch. The engagement was authentic and measurable — exactly what we needed to build momentum for AKEDO.",
+    metric: "AKEDO",
+    seed: "David",
+    link: "https://x.com/akedofun",
   },
   {
-    name: "James Okonkwo",
-    handle: "Founder, ChainPulse",
-    quote: "Our X impressions jumped 400% in the first week. The proof-based system means every like and retweet is from a verified person, not a script.",
-    metric: "400% impressions",
-    seed: "James",
+    name: "Lily",
+    handle: "Head of Growth, VIZO",
+    quote: "We switched to Depay and saw immediate results. Real users, real interactions — our community growth has been consistent and sustainable.",
+    metric: "VIZO",
+    seed: "Lily",
+    link: "https://x.com/vizoexchange",
   },
   {
-    name: "Elena Petrov",
-    handle: "Head of Growth, Vaultix",
-    quote: "We\u2019ve tried five engagement platforms. Depay is the only one where the engagement actually sticks — followers don\u2019t vanish after a week.",
-    metric: "92% retention",
-    seed: "Elena",
-  },
-  {
-    name: "Ryan Torres",
-    handle: "Co-founder, Minted Protocol",
-    quote: "Depay solved our cold-start problem. We went from 200 followers to 4k in a month with consistent, organic-looking engagement on every post.",
-    metric: "20x follower growth",
-    seed: "Ryan",
+    name: "Jack",
+    handle: "Growth Manager, AXIS",
+    quote: "Depay\u2019s proof-based system ensures every engagement is genuine. It\u2019s been a key part of our growth strategy at AXIS Robotics.",
+    metric: "AXIS",
+    seed: "Jack",
+    link: "https://x.com/axisrobotics",
   },
 ];
 
@@ -472,9 +468,14 @@ export function LoginPage() {
                     <p className="text-[14px] font-semibold">{t.name}</p>
                     <p className="text-[12px] text-muted">{t.handle}</p>
                   </div>
-                  <span className="ml-auto rounded-full bg-accent-light px-2.5 py-1 text-[12px] font-bold tabular-nums text-accent">
+                  <a
+                    href={t.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-auto rounded-full bg-accent-light px-2.5 py-1 text-[12px] font-bold tabular-nums text-accent hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
                     {t.metric}
-                  </span>
+                  </a>
                 </div>
                 <p className="text-[14px] leading-relaxed text-muted">
                   &ldquo;{t.quote}&rdquo;
