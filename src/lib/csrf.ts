@@ -23,23 +23,18 @@ export function validateOrigin(request: NextRequest): boolean {
     return process.env.NODE_ENV !== "production";
   }
 
-  const appHost = new URL(appUrl).host;
+  const appHost = new URL(appUrl).host.replace(/^www\./, "");
 
-  if (origin) {
+  const matchesHost = (header: string): boolean => {
     try {
-      return new URL(origin).host === appHost;
+      return new URL(header).host.replace(/^www\./, "") === appHost;
     } catch {
       return false;
     }
-  }
+  };
 
-  if (referer) {
-    try {
-      return new URL(referer).host === appHost;
-    } catch {
-      return false;
-    }
-  }
+  if (origin && matchesHost(origin)) return true;
+  if (referer && matchesHost(referer)) return true;
 
   return false;
 }
