@@ -23,11 +23,11 @@ export default async function AdminLayout({
     .eq("review_status", "pending_review");
 
   return (
-    <div className="min-h-dvh bg-background">
-      <AdminSidebar pendingReviewCount={count ?? 0} />
-      <AdminWalletProvider>
+    <AdminWalletProvider>
+      <div className="min-h-dvh bg-background">
+        <AdminSidebar pendingReviewCount={count ?? 0} />
         <main className="p-4 pt-4 lg:pl-72 lg:pr-8 lg:py-8">{children}</main>
-      </AdminWalletProvider>
-    </div>
+      </div>
+    </AdminWalletProvider>
   );
 }
