@@ -39,7 +39,7 @@ const pastProjects = [
     avatar: "https://api.dicebear.com/9.x/notionists/svg?seed=Vizo",
     profileUrl: "https://x.com/vizoexchange",
     tasks: [
-      { label: "Campaign 1", url: "https://x.com/vizoexchange/status/2084190488748580917", milestone: "100/100" },
+      { label: "Campaign 1", url: "https://x.com/vizoexchange/status/2084190488748580917", milestone: "50/50" },
       { label: "Campaign 2", url: "https://x.com/vizoexchange/status/2083769750660997365", milestone: "50/50" },
       { label: "Campaign 3", url: "https://x.com/akedofun/status/2079800414099419200", milestone: "100/100" },
     ],
