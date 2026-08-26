@@ -8,8 +8,8 @@ export function TopBar({ user }: { user: User }) {
     <header className="sticky top-0 z-40 glass border-b border-border/50">
       <div className="mx-auto flex h-14 items-center justify-between px-5">
         <Link href="/earn" className="flex items-center gap-2.5">
-          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
-          <span className="text-[15px] font-semibold tracking-tight">Depay</span>
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={32} height={32} className="rounded-lg" />
+          <span className="text-[15px] font-semibold tracking-tight">Deepays</span>
         </Link>
 
         <Link href="/profile" aria-label="Your profile" className="relative">

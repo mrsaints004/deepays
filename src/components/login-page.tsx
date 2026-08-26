@@ -9,7 +9,7 @@ const testimonials = [
   {
     name: "David",
     handle: "Growth Lead, Agentic Ai",
-    quote: "Depay gave us a real edge for our launch. The engagement was authentic and measurable — exactly what we needed to build momentum for AKEDO.",
+    quote: "Deepays gave us a real edge for our launch. The engagement was authentic and measurable — exactly what we needed to build momentum for AKEDO.",
     metric: "AKEDO",
     seed: "David",
     link: "https://x.com/akedofun",
@@ -17,7 +17,7 @@ const testimonials = [
   {
     name: "Lily",
     handle: "Head of Growth, VIZO",
-    quote: "We switched to Depay and saw immediate results. Real users, real interactions — our community growth has been consistent and sustainable.",
+    quote: "We switched to Deepays and saw immediate results. Real users, real interactions — our community growth has been consistent and sustainable.",
     metric: "VIZO",
     seed: "Lily",
     link: "https://x.com/vizoexchange",
@@ -25,7 +25,7 @@ const testimonials = [
   {
     name: "Jack",
     handle: "Growth Manager, AXIS",
-    quote: "Depay\u2019s proof-based system ensures every engagement is genuine. It\u2019s been a key part of our growth strategy at AXIS Robotics.",
+    quote: "Deepays\u2019s proof-based system ensures every engagement is genuine. It\u2019s been a key part of our growth strategy at AXIS Robotics.",
     metric: "AXIS",
     seed: "Jack",
     link: "https://x.com/axisrobotics",
@@ -230,9 +230,9 @@ export function LoginPage() {
       <nav className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
-            <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
+            <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={32} height={32} className="rounded-lg" />
             <span className="text-[15px] font-semibold tracking-tight text-foreground">
-              Depay
+              Deepays
             </span>
           </div>
           <button
@@ -486,11 +486,11 @@ export function LoginPage() {
         </div>
       </section>
 
-      {/* Why Depay — asymmetric feature grid */}
+      {/* Why Deepays — asymmetric feature grid */}
       <section className="section-py bg-background">
         <div className="mx-auto max-w-6xl px-5">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Why Depay
+            Why Deepays
           </h2>
           <p className="mt-2 text-[15px] text-muted max-w-lg">
             Built different from the usual engagement platforms.
@@ -551,8 +551,8 @@ export function LoginPage() {
         <div className="mx-auto max-w-6xl px-5 py-10">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="flex items-center gap-2.5">
-              <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={28} height={28} className="rounded-lg" />
-              <span className="text-[13px] text-muted">&copy; {new Date().getFullYear()} Depay. All rights reserved.</span>
+              <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={28} height={28} className="rounded-lg" />
+              <span className="text-[13px] text-muted">&copy; {new Date().getFullYear()} Deepays. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-4">
               {/* X (Twitter) */}

@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-dvh items-center justify-center px-6">
       <div className="w-full max-w-sm animate-in">
         <div className="flex flex-col items-center">
-          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={48} height={48} className="rounded-xl" />
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={48} height={48} className="rounded-xl" />
           <h1 className="mt-4 text-lg font-bold">Admin Access</h1>
         </div>
 

@@ -24,7 +24,7 @@ function buildConfig() {
       chains: [base],
       connectors: [
         injected(),
-        coinbaseConnector({ appName: "Depay" }),
+        coinbaseConnector({ appName: "Deepays" }),
       ],
       transports: { [base.id]: http() },
       ssr: true,
@@ -58,7 +58,7 @@ function buildConfig() {
         ],
       },
     ],
-    { appName: "Depay", projectId },
+    { appName: "Deepays", projectId },
   );
 
   return createConfig({

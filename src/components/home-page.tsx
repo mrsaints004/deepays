@@ -1,10 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatUSD } from "@/lib/utils";
+
+/* ────────────────────────────────────────────────────────────
+   Scroll-reveal hook — adds "visible" class when element
+   enters viewport
+   ──────────────────────────────────────────────────────────── */
+
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            // Also reveal children with reveal classes
+            entry.target.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale").forEach((child) => {
+              child.classList.add("visible");
+            });
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    // Observe the container and all reveal children
+    observer.observe(el);
+    el.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale").forEach((child) => {
+      observer.observe(child);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
+
+function RevealSection({ children, className = "", as: Tag = "section" }: { children: React.ReactNode; className?: string; as?: "section" | "div" }) {
+  const ref = useScrollReveal();
+  return (
+    <Tag ref={ref} className={className}>
+      {children}
+    </Tag>
+  );
+}
 
 /* ────────────────────────────────────────────────────────────
    Types
@@ -70,7 +118,7 @@ const testimonials = [
   {
     name: "David",
     handle: "Growth Lead, Agentic Ai",
-    quote: "Depay gave us a real edge for our launch. The engagement was authentic and measurable — exactly what we needed to build momentum for AKEDO.",
+    quote: "Deepays gave us a real edge for our launch. The engagement was authentic and measurable — exactly what we needed to build momentum for AKEDO.",
     metric: "AKEDO",
     seed: "David",
     link: "https://x.com/akedofun",
@@ -78,7 +126,7 @@ const testimonials = [
   {
     name: "Lily",
     handle: "Head of Growth, VIZO",
-    quote: "We switched to Depay and saw immediate results. Real users, real interactions — our community growth has been consistent and sustainable.",
+    quote: "We switched to Deepays and saw immediate results. Real users, real interactions — our community growth has been consistent and sustainable.",
     metric: "VIZO",
     seed: "Lily",
     link: "https://x.com/vizoexchange",
@@ -86,7 +134,7 @@ const testimonials = [
   {
     name: "Jack",
     handle: "Growth Manager, AXIS",
-    quote: "Depay\u2019s proof-based system ensures every engagement is genuine. It\u2019s been a key part of our growth strategy at AXIS Robotics.",
+    quote: "Deepays\u2019s proof-based system ensures every engagement is genuine. It\u2019s been a key part of our growth strategy at AXIS Robotics.",
     metric: "AXIS",
     seed: "Jack",
     link: "https://x.com/axisrobotics",
@@ -94,9 +142,9 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "10K+", label: "Tasks Completed" },
-  { value: "$50K+", label: "Paid to Users" },
-  { value: "3K+", label: "Active Earners" },
+  { value: "1.6K+", label: "Tasks Completed" },
+  { value: "$17K+", label: "Paid to Users" },
+  { value: "600+", label: "Active Earners" },
   { value: "100%", label: "Payout Rate" },
 ];
 
@@ -541,8 +589,8 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
       <nav className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
           <div className="flex items-center gap-3">
-            <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={36} height={36} className="rounded-xl" />
-            <span className="text-[17px] font-bold tracking-tight text-foreground">Depay</span>
+            <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={36} height={36} className="rounded-xl" />
+            <span className="text-[17px] font-bold tracking-tight text-foreground">Deepays</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -598,7 +646,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
               <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
                 Get paid for your{" "}
                 <span className="relative">
-                  <span className="relative z-10 text-cerulean-300">X activity</span>
+                  <span className="relative z-10 text-shimmer">X activity</span>
                 </span>
               </h1>
 
@@ -649,9 +697,9 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
       </section>
 
       {/* ── Current Tasks Section ── */}
-      <section id="tasks" className="section-py bg-neutral-50 scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+      <RevealSection className="section-py bg-neutral-50 scroll-mt-16" as="section">
+        <div id="tasks" className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 reveal">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-accent-light px-3 py-1 mb-3">
                 <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
@@ -749,22 +797,22 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             </div>
           )}
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Past Campaigns Section ── */}
-      <section id="past-campaigns" className="section-py bg-white scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="mb-8">
+      <RevealSection className="section-py bg-white scroll-mt-16" as="section">
+        <div id="past-campaigns" className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="mb-8 reveal">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">Completed Campaigns</p>
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Past Tasks</h2>
             <p className="mt-1.5 text-[15px] text-muted max-w-lg">
-              Projects that have successfully run engagement campaigns through Depay. Engage with these posts to support the community.
+              Projects that have successfully run engagement campaigns through Deepays. Engage with these posts to support the community.
             </p>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            {pastProjects.map((project) => (
-              <div key={project.handle} className="rounded-2xl border border-border bg-card p-5 shadow-soft-sm hover:shadow-soft-md transition-all duration-300">
+            {pastProjects.map((project, pi) => (
+              <div key={project.handle} className={`reveal-scale reveal-delay-${pi + 1} rounded-2xl border border-border bg-card p-5 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}>
                 {/* Project header */}
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
                   <img
@@ -830,12 +878,12 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="section-py bg-neutral-50 scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="text-center mb-12">
+      <RevealSection className="section-py bg-neutral-50 scroll-mt-16" as="section">
+        <div id="how-it-works" className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="text-center mb-12 reveal">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How It Works</h2>
             <p className="mt-2 text-[15px] text-muted max-w-md mx-auto">
               Three simple steps to start earning from your social media activity.
@@ -862,10 +910,10 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
                 desc: "Admin reviews your proof. Approved tasks add to your weekly earnings, paid out in USDC every Monday at 00:00 UTC.",
                 icon: <DollarIcon />,
               },
-            ].map((item) => (
+            ].map((item, i) => (
               <div
                 key={item.step}
-                className="relative rounded-2xl border border-border bg-white p-6 shadow-soft-sm hover:shadow-soft-md transition-all duration-300"
+                className={`reveal reveal-delay-${i + 1} relative rounded-2xl border border-border bg-white p-6 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-light text-accent">
@@ -879,20 +927,20 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
-      {/* ── Why Depay — Feature grid ── */}
-      <section className="section-py bg-white">
+      {/* ── Why Deepays — Feature grid ── */}
+      <RevealSection className="section-py bg-white" as="section">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Why Depay</h2>
+          <div className="text-center mb-12 reveal">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Why Deepays</h2>
             <p className="mt-2 text-[15px] text-muted max-w-md mx-auto">
               Built different from the usual engagement platforms.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
+            <div className="reveal reveal-delay-1 md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent"><ShieldIcon /></div>
                 <h3 className="text-[17px] font-bold">Proof-based payouts</h3>
@@ -901,7 +949,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
                 Every task requires a proof link. Admin reviews ensure no gaming, no bots. You do real work, you get real money.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
+            <div className="reveal reveal-delay-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent"><DollarIcon /></div>
                 <h3 className="text-[17px] font-bold">No minimums</h3>
@@ -910,7 +958,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
                 Every dollar is yours from day one. No withdrawal thresholds or hidden deductions.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
+            <div className="reveal reveal-delay-3 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent"><ClockIcon /></div>
                 <h3 className="text-[17px] font-bold">Weekly payouts</h3>
@@ -919,7 +967,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
                 Calculated and paid every Monday at 00:00 UTC. Consistent, predictable, reliable.
               </p>
             </div>
-            <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
+            <div className="reveal reveal-delay-4 md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-soft-sm hover:shadow-soft-md transition-all">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-accent"><EyeIcon /></div>
                 <h3 className="text-[17px] font-bold">Transparent pricing</h3>
@@ -930,19 +978,19 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             </div>
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── Testimonials ── */}
-      <section id="testimonials" className="section-py bg-neutral-50 scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="text-center mb-10">
+      <RevealSection className="section-py bg-neutral-50 scroll-mt-16" as="section">
+        <div id="testimonials" className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="text-center mb-10 reveal">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">From the community</p>
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Trusted by Projects</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <div key={t.seed} className="rounded-2xl border border-border bg-white p-6 shadow-soft-sm hover:shadow-soft-md transition-all duration-300">
+            {testimonials.map((t, i) => (
+              <div key={t.seed} className={`reveal reveal-delay-${i + 1} rounded-2xl border border-border bg-white p-6 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}>
                 <div className="flex items-center gap-3 mb-4">
                   <img
                     src={`https://api.dicebear.com/9.x/notionists/svg?seed=${t.seed}`}
@@ -971,7 +1019,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             ))}
           </div>
         </div>
-      </section>
+      </RevealSection>
 
       {/* ── CTA Section ── */}
       <section className="relative overflow-hidden bg-hero">
@@ -1012,8 +1060,8 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             {/* Brand */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2.5 mb-3">
-                <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-xl" />
-                <span className="text-[15px] font-bold tracking-tight">Depay</span>
+                <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={32} height={32} className="rounded-xl" />
+                <span className="text-[15px] font-bold tracking-tight">Deepays</span>
               </div>
               <p className="text-[13px] text-muted leading-relaxed max-w-sm">
                 The engagement platform that pays. Complete tasks on X, submit proof, and earn weekly USDC rewards.
@@ -1049,7 +1097,7 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
           </div>
 
           <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[12px] text-muted">&copy; {new Date().getFullYear()} Depay. All rights reserved.</p>
+            <p className="text-[12px] text-muted">&copy; {new Date().getFullYear()} Deepays. All rights reserved.</p>
             <p className="text-[12px] text-muted">Payouts in USDC on Base</p>
           </div>
         </div>

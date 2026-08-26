@@ -33,9 +33,9 @@ export function AdminSidebar({ pendingReviewCount = 0 }: AdminSidebarProps) {
       {/* Logo */}
       <div className="flex h-14 items-center justify-between border-b border-white/8 px-6">
         <div className="flex items-center gap-3">
-          <Image src="/Deepay_logo_option_1.png" alt="Depay" width={32} height={32} className="rounded-lg" />
+          <Image src="/Deepay_logo_option_1.png" alt="Deepays" width={32} height={32} className="rounded-lg" />
           <span className="text-[15px] font-semibold tracking-tight text-white">
-            Depay Admin
+            Deepays Admin
           </span>
         </div>
         <button onClick={() => setOpen(false)} aria-label="Close menu" className="lg:hidden rounded-lg p-1.5 text-white/50 hover:text-white hover:bg-white/8 transition-colors">
@@ -93,7 +93,7 @@ export function AdminSidebar({ pendingReviewCount = 0 }: AdminSidebarProps) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2">
-          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={28} height={28} className="rounded-lg" />
+          <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={28} height={28} className="rounded-lg" />
           <span className="text-[14px] font-semibold tracking-tight">Admin</span>
         </div>
         <div className="ml-auto">

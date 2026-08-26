@@ -14,8 +14,8 @@ export function Sidebar({ user }: { user: User }) {
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-border bg-white lg:flex lg:flex-col">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-border px-6">
-        <Image src="/Deepay_logo_option_1_ransparent.png" alt="Depay" width={32} height={32} className="rounded-lg" />
-        <span className="text-[15px] font-semibold tracking-tight">Depay</span>
+        <Image src="/Deepay_logo_option_1_ransparent.png" alt="Deepays" width={32} height={32} className="rounded-lg" />
+        <span className="text-[15px] font-semibold tracking-tight">Deepays</span>
       </div>
 
       {/* Nav links */}
