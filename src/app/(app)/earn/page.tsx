@@ -24,7 +24,10 @@ export default async function EarnPage() {
       .eq("week_start", weekStart),
   ]);
 
-  const tasks = tasksResult.data ?? [];
+  const now = new Date().toISOString();
+  const tasks = (tasksResult.data ?? []).filter(
+    (t) => !t.expires_at || t.expires_at > now
+  );
   const completions = (completionsResult.data ?? []) as Array<{
     task_id: string;
     review_status: "pending_review" | "approved" | "rejected";
@@ -39,7 +42,8 @@ export default async function EarnPage() {
     const { data: countRows } = await supabase
       .from("completions")
       .select("task_id")
-      .in("task_id", taskIds);
+      .in("task_id", taskIds)
+      .neq("review_status", "rejected");
 
     if (countRows) {
       for (const row of countRows) {
@@ -52,7 +56,6 @@ export default async function EarnPage() {
     <EarnContent
       tasks={tasks}
       completions={completions}
-      userId={user.id}
       participantCounts={participantCounts}
     />
   );

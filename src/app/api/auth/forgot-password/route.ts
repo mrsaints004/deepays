@@ -23,14 +23,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Use Supabase's built-in password reset email
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`;
-    const { error } = await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: redirectUrl,
-      },
+    // Use resetPasswordForEmail which actually sends the email
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback?type=recovery`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
     });
 
     // Always return success to prevent email enumeration

@@ -51,11 +51,13 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!existingUser) {
-      // Derive username from email or Google name
-      const username =
+      // Derive username from email or Google name, sanitized for X format
+      const rawName =
         authUser.user_metadata?.name ||
         authUser.email?.split("@")[0] ||
         "user";
+      // Strip invalid chars (keep only alphanumeric and underscores), truncate to 15
+      const username = rawName.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 15) || "user";
 
       await admin.from("users").insert({
         auth_id: authUser.id,

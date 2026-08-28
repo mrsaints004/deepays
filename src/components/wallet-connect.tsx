@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount, useDisconnect } from "wagmi";
+import { useToast } from "@/components/toast";
 
 interface WalletConnectProps {
   currentAddress: string | null;
@@ -14,6 +15,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
   const [mode, setMode] = useState<"idle" | "paste">("idle");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast();
   const savingRef = useRef(false);
   // Prevent infinite retry loop: if save fails, don't auto-retry from useEffect
   const saveFailedRef = useRef(false);
@@ -41,6 +43,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
       setSavedAddress(data.wallet_address);
       setMode("idle");
       setInput("");
+      toast("Wallet connected successfully", "success");
     } catch (err) {
       saveFailedRef.current = true;
       setError(err instanceof Error ? err.message : "Failed to save wallet");
@@ -111,6 +114,7 @@ export function WalletConnect({ currentAddress }: WalletConnectProps) {
       if (!res.ok) throw new Error("Failed to disconnect");
       setSavedAddress(null);
       wagmiDisconnect();
+      toast("Wallet disconnected", "info");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to disconnect");
     } finally {

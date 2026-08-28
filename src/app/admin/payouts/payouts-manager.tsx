@@ -77,7 +77,8 @@ export function PayoutsManager({ initialPayouts, weeks, initialWeek }: PayoutsMa
         });
 
         setPayouts((prev) => prev.map((p) => p.id === payoutId ? { ...p, status: "paid" as const, tx_hash: txHash, paid_at: new Date().toISOString() } : p));
-      } catch {
+        toast("Payout sent successfully", "success");
+      } catch (err) {
         // 3b. Revert on wallet rejection/failure
         await fetch("/api/admin/payouts", {
           method: "PATCH",
@@ -85,6 +86,7 @@ export function PayoutsManager({ initialPayouts, weeks, initialWeek }: PayoutsMa
           body: JSON.stringify({ action: "revert", payoutId }),
         });
         setPayouts((prev) => prev.map((p) => p.id === payoutId ? { ...p, status: "pending" as const } : p));
+        toast(err instanceof Error ? err.message : "Transaction failed or was rejected", "error");
       }
     } finally {
       setSendingIds((prev) => { const next = new Set(prev); next.delete(payoutId); return next; });
@@ -92,8 +94,29 @@ export function PayoutsManager({ initialPayouts, weeks, initialWeek }: PayoutsMa
   }
 
   async function markPaid(payoutId: string) {
-    const res = await fetch("/api/admin/payouts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ payoutId, status: "paid" }) });
-    if (res.ok) { setPayouts((prev) => prev.map((p) => p.id === payoutId ? { ...p, status: "paid" as const, paid_at: new Date().toISOString() } : p)); }
+    if (!(await confirm("Mark this payout as paid? This requires a valid transaction hash."))) return;
+    const txHashInput = window.prompt("Enter the transaction hash (0x...):");
+    if (!txHashInput || !/^0x[a-fA-F0-9]{64}$/.test(txHashInput)) {
+      toast("A valid transaction hash is required", "error");
+      return;
+    }
+    const reason = window.prompt("Reason for manual mark (required):");
+    if (!reason || reason.trim().length < 3) {
+      toast("A reason is required (at least 3 characters)", "error");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/payouts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ payoutId, status: "paid", tx_hash: txHashInput, reason }) });
+      if (res.ok) {
+        setPayouts((prev) => prev.map((p) => p.id === payoutId ? { ...p, status: "paid" as const, tx_hash: txHashInput, paid_at: new Date().toISOString() } : p));
+        toast("Payout marked as paid", "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast(err.error || "Failed to mark as paid", "error");
+      }
+    } catch {
+      toast("Network error. Please try again.", "error");
+    }
   }
 
   async function bulkPayAll() {

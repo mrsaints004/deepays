@@ -16,7 +16,7 @@ function isRateLimited(ip: string): boolean {
     return false;
   }
   record.count++;
-  return record.count > MAX_ATTEMPTS;
+  return record.count >= MAX_ATTEMPTS;
 }
 
 function constantTimeEqual(a: string, b: string): boolean {

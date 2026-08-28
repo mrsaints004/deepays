@@ -14,5 +14,11 @@ export async function GET() {
     return NextResponse.json({ message: "Failed to fetch tasks" }, { status: 500 });
   }
 
-  return NextResponse.json({ tasks: tasks ?? [] });
+  // Filter out tasks that have expired by date even if status hasn't been updated yet
+  const now = new Date().toISOString();
+  const activeTasks = (tasks ?? []).filter(
+    (t) => !t.expires_at || t.expires_at > now
+  );
+
+  return NextResponse.json({ tasks: activeTasks });
 }

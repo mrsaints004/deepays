@@ -4,6 +4,60 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { validateOrigin } from "@/lib/csrf";
 import { generalLimiter } from "@/lib/rate-limit";
 
+// PATCH — update user profile (X username)
+export async function PATCH(request: NextRequest) {
+  const rateLimited = await generalLimiter.check(request);
+  if (rateLimited) return rateLimited;
+
+  if (!validateOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const user = await getSession();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { x_username } = await request.json();
+
+    if (!x_username || typeof x_username !== "string") {
+      return NextResponse.json(
+        { error: "X username is required" },
+        { status: 400 }
+      );
+    }
+
+    const cleanUsername = x_username.replace(/^@/, "").trim();
+    if (!/^[a-zA-Z0-9_]{1,15}$/.test(cleanUsername)) {
+      return NextResponse.json(
+        { error: "Invalid X username. Use 1-15 characters: letters, numbers, underscores." },
+        { status: 400 }
+      );
+    }
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("users")
+      .update({ x_username: cleanUsername })
+      .eq("id", user.id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Failed to update profile" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, x_username: cleanUsername });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const rateLimited = await generalLimiter.check(request);
   if (rateLimited) return rateLimited;

@@ -40,7 +40,7 @@ export class RateLimiter {
 
     // Fast in-memory check first
     const record = this.store.get(ip);
-    if (record && now <= record.resetAt && record.count > this.maxRequests) {
+    if (record && now <= record.resetAt && record.count >= this.maxRequests) {
       const retryAfter = Math.ceil((record.resetAt - now) / 1000);
       return NextResponse.json(
         { message: "Too many requests. Please try again later." },
@@ -101,7 +101,7 @@ export class RateLimiter {
 
     record.count++;
 
-    if (record.count > this.maxRequests) {
+    if (record.count >= this.maxRequests) {
       const retryAfter = Math.ceil((record.resetAt - now) / 1000);
       return NextResponse.json(
         { message: "Too many requests. Please try again later." },

@@ -431,6 +431,22 @@ export async function PUT(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+
+  // Verify current status to prevent double-marking
+  const { data: currentPayout } = await supabase
+    .from("weekly_payouts")
+    .select("status")
+    .eq("id", payoutId)
+    .single();
+
+  if (!currentPayout) {
+    return NextResponse.json({ error: "Payout not found" }, { status: 404 });
+  }
+
+  if (status === "paid" && currentPayout.status === "paid") {
+    return NextResponse.json({ error: "Payout is already marked as paid" }, { status: 409 });
+  }
+
   const updateData: Record<string, unknown> = { status };
   if (tx_hash) updateData.tx_hash = tx_hash;
   if (status === "paid") updateData.paid_at = new Date().toISOString();

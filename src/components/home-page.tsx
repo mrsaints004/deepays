@@ -71,9 +71,24 @@ interface PublicTask {
   expires_at: string | null;
 }
 
+interface CompletedTask {
+  id: string;
+  title: string;
+  description: string;
+  action_url: string;
+  reward_usd: number;
+  category: string;
+  status: string;
+  max_participants: number | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
 interface HomePageProps {
   user: { id: string; email: string | null; x_username: string } | null;
   currentTasks: PublicTask[];
+  completedTasks?: CompletedTask[];
+  completedParticipantCounts?: Record<string, number>;
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -295,7 +310,7 @@ const categoryConfig: Record<string, { dot: string; text: string; bg: string }> 
    HomePage Component
    ──────────────────────────────────────────────────────────── */
 
-export function HomePage({ user, currentTasks }: HomePageProps) {
+export function HomePage({ user, currentTasks, completedTasks = [], completedParticipantCounts = {} }: HomePageProps) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -309,6 +324,22 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Show error messages from OAuth callback redirects (e.g. /?error=auth_failed)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get("error");
+    if (authError) {
+      const errorMessages: Record<string, string> = {
+        auth_failed: "Sign-in failed. Please try again.",
+        missing_code: "Sign-in was interrupted. Please try again.",
+        reset_failed: "Password reset failed. Please request a new link.",
+      };
+      setError(errorMessages[authError] || "Something went wrong. Please try again.");
+      // Clean URL without reloading
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
@@ -810,9 +841,78 @@ export function HomePage({ user, currentTasks }: HomePageProps) {
             </p>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Dynamic completed campaigns from DB — newest first */}
+            {completedTasks.map((task, i) => {
+              const cat = task.category || "engagement";
+              const cc = categoryConfig[cat] || categoryConfig.other;
+              const participants = completedParticipantCounts[task.id] ?? 0;
+              const isFull = task.max_participants != null && participants >= task.max_participants;
+              // Extract handle from action_url if it's a twitter/x link
+              const actionHost = (() => { try { return new URL(task.action_url).hostname; } catch { return ""; } })();
+              const isXLink = ["twitter.com", "x.com", "www.twitter.com", "www.x.com"].includes(actionHost);
+              const tweetId = isXLink ? task.action_url.split("/status/")[1]?.split("?")[0] : null;
+
+              return (
+                <div
+                  key={task.id}
+                  className={`reveal-scale ${i < 6 ? `reveal-delay-${(i % 3) + 1}` : ""} rounded-2xl border border-border bg-card p-5 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${cc.bg} ${cc.text}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${cc.dot}`} />
+                          {cat}
+                        </span>
+                        {isFull && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 tabular-nums">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            {participants}/{task.max_participants}
+                          </span>
+                        )}
+                        {!isFull && participants > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
+                            <UsersIcon /> {participants} completed
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-[15px] font-semibold leading-snug text-foreground">{task.title}</h3>
+                    </div>
+                    <div className="flex-shrink-0 rounded-xl bg-neutral-100 border border-neutral-200 px-3 py-1.5">
+                      <span className="text-sm font-bold tabular-nums text-muted">{formatUSD(task.reward_usd)}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[13px] leading-relaxed text-muted mb-4 line-clamp-2">{task.description}</p>
+
+                  {/* Engagement actions for X posts */}
+                  {isXLink && tweetId && (
+                    <div className="mb-3">
+                      <TweetActions tweetUrl={task.action_url} profileUrl={task.action_url.split("/status/")[0] || task.action_url} />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                      <CheckIcon /> Completed
+                    </span>
+                    <a
+                      href={task.action_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
+                    >
+                      View Post <ExternalIcon />
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Legacy hardcoded campaigns — always shown at the bottom */}
             {pastProjects.map((project, pi) => (
-              <div key={project.handle} className={`reveal-scale reveal-delay-${pi + 1} rounded-2xl border border-border bg-card p-5 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}>
+              <div key={project.handle} className={`reveal-scale reveal-delay-${(pi % 3) + 1} rounded-2xl border border-border bg-card p-5 shadow-soft-sm hover:shadow-soft-md transition-all duration-300`}>
                 {/* Project header */}
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
                   <img

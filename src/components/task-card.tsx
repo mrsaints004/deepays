@@ -45,6 +45,8 @@ export function TaskCard({ task, isCompleted, reviewStatus, onComplete, particip
   const category = task.category || "engagement";
   const isFull = task.max_participants != null && participantCount != null && participantCount >= task.max_participants;
   const isFollow = category === "follow";
+  const isRejected = reviewStatus === "rejected";
+  const canResubmit = isRejected && !isExpired && !isFull;
 
   const proofLabels: Record<string, string> = {
     engagement: "Paste the link to your comment",
@@ -89,7 +91,10 @@ export function TaskCard({ task, isCompleted, reviewStatus, onComplete, particip
     try {
       await onComplete(task.id, isFollow ? { proofImageUrl } : { proofUrl });
       setDone(true);
-    } catch { toast("Submission failed. Please try again.", "error"); } finally { setCompleting(false); }
+      toast("Task submitted! It will be reviewed shortly.", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Submission failed. Please try again.", "error");
+    } finally { setCompleting(false); }
   }
 
   const badge = reviewStatus ? reviewBadges[reviewStatus] : null;
@@ -151,7 +156,7 @@ export function TaskCard({ task, isCompleted, reviewStatus, onComplete, particip
         </div>
 
         {/* Actions */}
-        {!done && !isExpired && !isFull && (
+        {((!done && !isExpired && !isFull) || canResubmit) && (
           <div className="mt-3 space-y-3">
             <a
               href={task.action_url}

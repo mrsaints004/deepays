@@ -13,17 +13,17 @@ interface CompletionInfo {
 interface EarnContentProps {
   tasks: Task[];
   completions: CompletionInfo[];
-  userId: string;
   participantCounts: Record<string, number>;
 }
 
 const CATEGORIES = ["all", "engagement", "follow", "content", "other"] as const;
 
-export function EarnContent({ tasks, completions, userId, participantCounts }: EarnContentProps) {
+export function EarnContent({ tasks, completions, participantCounts: initialParticipantCounts }: EarnContentProps) {
   const [completedMap, setCompletedMap] = useState<
     Map<string, "pending_review" | "approved" | "rejected">
   >(() => new Map(completions.map((c) => [c.task_id, c.review_status])));
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>(initialParticipantCounts);
 
   const totalTasks = tasks.length;
   const approvedCount = [...completedMap.values()].filter((s) => s === "approved").length;
@@ -46,19 +46,29 @@ export function EarnContent({ tasks, completions, userId, participantCounts }: E
     const res = await fetch("/api/tasks/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskId, userId, ...proof }),
+      body: JSON.stringify({ taskId, ...proof }),
     });
 
     if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Failed to complete task");
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.message || "Failed to complete task. Please try again.");
     }
+
+    const wasResubmission = completedMap.get(taskId) === "rejected";
 
     setCompletedMap((prev) => {
       const next = new Map(prev);
       next.set(taskId, "pending_review");
       return next;
     });
+
+    // Only increment participant count for new submissions, not resubmissions
+    if (!wasResubmission) {
+      setParticipantCounts((prev) => ({
+        ...prev,
+        [taskId]: (prev[taskId] ?? 0) + 1,
+      }));
+    }
   }
 
   return (

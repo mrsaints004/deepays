@@ -116,9 +116,9 @@ export async function POST(request: NextRequest) {
       // Use optimistic locking with retry loop to prevent lost updates
       const MAX_RETRIES = 3;
       let retries = 0;
-      let success = false;
+      let payoutSuccess = false;
 
-      while (retries < MAX_RETRIES && !success) {
+      while (retries < MAX_RETRIES && !payoutSuccess) {
         const { data: payout } = await supabase
           .from("weekly_payouts")
           .select("*")
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
             });
 
           if (!updatePayoutError) {
-            success = true;
+            payoutSuccess = true;
           } else if (
             updatePayoutError.message?.includes("does not exist") ||
             updatePayoutError.message?.includes("function")
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
             });
 
           if (!insertError) {
-            success = true;
+            payoutSuccess = true;
           } else if (insertError.code === "23505") {
             // Unique constraint — another request created it first, retry to update
             retries++;
@@ -171,6 +171,19 @@ export async function POST(request: NextRequest) {
             break; // Unexpected error
           }
         }
+      }
+
+      if (!payoutSuccess) {
+        // Revert the completion approval since payout credit failed
+        await supabase
+          .from("completions")
+          .update({ review_status: "pending_review", reviewed_at: null, reviewer_note: null })
+          .eq("id", completionId);
+
+        return NextResponse.json(
+          { error: "Approved but failed to credit payout. The approval has been reverted. Please try again." },
+          { status: 500 }
+        );
       }
 
       // Audit log

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/toast";
 
 export function DeleteAccount() {
+  const { toast } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,10 @@ export function DeleteAccount() {
   async function handleExport() {
     try {
       const res = await fetch("/api/user/account");
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast("Failed to export data. Please try again.", "error");
+        return;
+      }
       const data = await res.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -51,8 +56,9 @@ export function DeleteAccount() {
       a.download = "depay-data-export.json";
       a.click();
       URL.revokeObjectURL(url);
+      toast("Data exported successfully", "success");
     } catch {
-      // silent fail
+      toast("Failed to export data. Please try again.", "error");
     }
   }
 

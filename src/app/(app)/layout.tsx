@@ -4,6 +4,7 @@ import { TopBar } from "@/components/top-bar";
 import { BottomNav } from "@/components/bottom-nav";
 import { Sidebar } from "@/components/sidebar";
 import { UserWalletProvider } from "@/components/user-wallet-provider";
+import { XHandleBanner } from "@/components/x-handle-banner";
 
 export default async function AppLayout({
   children,
@@ -27,6 +28,7 @@ export default async function AppLayout({
         {/* Main content — offset by sidebar width on desktop */}
         <div className="flex-1 lg:pl-64">
           <main id="main-content" className="mx-auto w-full max-w-3xl px-5 pb-24 pt-6 lg:pb-8">
+            <XHandleBanner currentUsername={user.x_username} email={user.email ?? null} />
             {children}
           </main>
         </div>

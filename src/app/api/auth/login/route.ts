@@ -35,8 +35,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      const msg = error.message?.toLowerCase() || "";
+      let userMessage = "Invalid email or password";
+      if (msg.includes("email not confirmed")) {
+        userMessage = "Please verify your email before logging in. Check your inbox for a confirmation link.";
+      } else if (msg.includes("too many requests") || msg.includes("rate limit")) {
+        userMessage = "Too many login attempts. Please wait a few minutes and try again.";
+      }
       return NextResponse.json(
-        { message: "Invalid email or password" },
+        { message: userMessage },
         { status: 401 }
       );
     }

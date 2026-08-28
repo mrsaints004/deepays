@@ -61,12 +61,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check participant limit
+    // Check participant limit (exclude rejected completions — they don't consume slots)
     if (task.max_participants) {
       const { count } = await supabase
         .from("completions")
         .select("id", { count: "exact", head: true })
-        .eq("task_id", taskId);
+        .eq("task_id", taskId)
+        .neq("review_status", "rejected");
 
       if (count != null && count >= task.max_participants) {
         return NextResponse.json(
@@ -155,12 +156,37 @@ export async function POST(request: NextRequest) {
     // Check if already completed — use maybeSingle to avoid error on zero rows
     const { data: existing } = await supabase
       .from("completions")
-      .select("id")
+      .select("id, review_status")
       .eq("user_id", userId)
       .eq("task_id", taskId)
       .maybeSingle();
 
     if (existing) {
+      // Allow resubmission if the previous submission was rejected
+      if (existing.review_status === "rejected") {
+        const { error: updateError } = await supabase
+          .from("completions")
+          .update({
+            proof_url: category === "follow" ? null : proofUrl,
+            proof_image_url: category === "follow" ? proofImageUrl : null,
+            review_status: "pending_review",
+            completed_at: new Date().toISOString(),
+            reviewed_at: null,
+            reviewed_by: null,
+            reviewer_note: null,
+          })
+          .eq("id", existing.id);
+
+        if (updateError) {
+          return NextResponse.json(
+            { message: "Failed to resubmit task" },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ success: true, resubmitted: true });
+      }
+
       return NextResponse.json(
         { message: "Task already completed" },
         { status: 409 }

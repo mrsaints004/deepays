@@ -13,7 +13,7 @@ interface TasksManagerProps {
 const CATEGORIES = ["engagement", "follow", "content", "other"];
 
 export function TasksManager({ initialTasks }: TasksManagerProps) {
-  const { confirm } = useToast();
+  const { toast, confirm } = useToast();
   const [tasks, setTasks] = useState(initialTasks);
   const [showPanel, setShowPanel] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -48,30 +48,56 @@ export function TasksManager({ initialTasks }: TasksManagerProps) {
       category: formCategory, max_participants: formMaxParticipants || null,
       ...(editingTask ? { id: editingTask.id } : {}),
     };
-    const res = await fetch("/api/admin/tasks", {
-      method: editingTask ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (editingTask) { setTasks((prev) => prev.map((t) => (t.id === data.id ? data : t))); }
-      else { setTasks((prev) => [data, ...prev]); }
-      resetForm();
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method: editingTask ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (editingTask) { setTasks((prev) => prev.map((t) => (t.id === data.id ? data : t))); }
+        else { setTasks((prev) => [data, ...prev]); }
+        resetForm();
+        toast(editingTask ? "Task updated" : "Task created", "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast(err.error || "Failed to save task", "error");
+      }
+    } catch {
+      toast("Network error. Please try again.", "error");
     }
     setSaving(false);
   }
 
   async function toggleStatus(task: Task) {
     const newStatus = task.status === "active" ? "paused" : "active";
-    const res = await fetch("/api/admin/tasks", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: task.id, status: newStatus }) });
-    if (res.ok) { setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t)); }
+    try {
+      const res = await fetch("/api/admin/tasks", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: task.id, status: newStatus }) });
+      if (res.ok) {
+        setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t));
+        toast(`Task ${newStatus === "active" ? "activated" : "paused"}`, "success");
+      } else {
+        toast("Failed to update task status", "error");
+      }
+    } catch {
+      toast("Network error. Please try again.", "error");
+    }
   }
 
   async function deleteTask(taskId: string) {
     if (!(await confirm("Delete this task permanently?"))) return;
-    const res = await fetch(`/api/admin/tasks?id=${taskId}`, { method: "DELETE" });
-    if (res.ok) { setTasks((prev) => prev.filter((t) => t.id !== taskId)); }
+    try {
+      const res = await fetch(`/api/admin/tasks?id=${taskId}`, { method: "DELETE" });
+      if (res.ok) {
+        setTasks((prev) => prev.filter((t) => t.id !== taskId));
+        toast("Task deleted", "success");
+      } else {
+        toast("Failed to delete task", "error");
+      }
+    } catch {
+      toast("Network error. Please try again.", "error");
+    }
   }
 
   const statusBadge = (status: string) => {
