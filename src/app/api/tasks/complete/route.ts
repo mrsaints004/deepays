@@ -61,13 +61,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check participant limit (exclude rejected completions — they don't consume slots)
+    // Check participant limit — every submission counts, no admin approval needed
     if (task.max_participants) {
       const { count } = await supabase
         .from("completions")
         .select("id", { count: "exact", head: true })
-        .eq("task_id", taskId)
-        .neq("review_status", "rejected");
+        .eq("task_id", taskId);
 
       if (count != null && count >= task.max_participants) {
         return NextResponse.json(

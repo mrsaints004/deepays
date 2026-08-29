@@ -45,8 +45,7 @@ export default async function Home() {
     const { data: counts } = await supabase
       .from("completions")
       .select("task_id")
-      .in("task_id", allTaskIds)
-      .neq("review_status", "rejected");
+      .in("task_id", allTaskIds);
 
     if (counts) {
       const allCounts = counts.reduce<Record<string, number>>((acc, row) => {

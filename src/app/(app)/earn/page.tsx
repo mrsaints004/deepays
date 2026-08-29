@@ -41,8 +41,7 @@ export default async function EarnPage() {
     const { data: countRows } = await supabase
       .from("completions")
       .select("task_id")
-      .in("task_id", taskIds)
-      .neq("review_status", "rejected");
+      .in("task_id", taskIds);
 
     if (countRows) {
       for (const row of countRows) {
