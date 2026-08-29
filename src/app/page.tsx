@@ -36,21 +36,31 @@ export default async function Home() {
 
   const completedTasks = [...dateExpiredTasks, ...(completedResult.data ?? [])];
 
-  // Fetch participant counts for completed tasks that have max_participants
+  // Fetch participant counts for both active and completed tasks
+  const allTaskIds = [...activeTasks, ...completedTasks].map((t) => t.id);
+  let activeParticipantCounts: Record<string, number> = {};
   let completedParticipantCounts: Record<string, number> = {};
-  const completedTaskIds = completedTasks.map((t) => t.id);
-  if (completedTaskIds.length > 0) {
+
+  if (allTaskIds.length > 0) {
     const { data: counts } = await supabase
       .from("completions")
       .select("task_id")
-      .in("task_id", completedTaskIds)
+      .in("task_id", allTaskIds)
       .neq("review_status", "rejected");
 
     if (counts) {
-      completedParticipantCounts = counts.reduce<Record<string, number>>((acc, row) => {
+      const allCounts = counts.reduce<Record<string, number>>((acc, row) => {
         acc[row.task_id] = (acc[row.task_id] ?? 0) + 1;
         return acc;
       }, {});
+
+      const activeIds = new Set(activeTasks.map((t) => t.id));
+      const completedIds = new Set(completedTasks.map((t) => t.id));
+
+      for (const [taskId, count] of Object.entries(allCounts)) {
+        if (activeIds.has(taskId)) activeParticipantCounts[taskId] = count;
+        if (completedIds.has(taskId)) completedParticipantCounts[taskId] = count;
+      }
     }
   }
 
@@ -58,6 +68,7 @@ export default async function Home() {
     <HomePage
       user={user ? { id: user.id, email: user.email ?? null, x_username: user.x_username } : null}
       currentTasks={activeTasks}
+      activeParticipantCounts={activeParticipantCounts}
       completedTasks={completedTasks}
       completedParticipantCounts={completedParticipantCounts}
     />

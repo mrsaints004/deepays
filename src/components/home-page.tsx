@@ -87,6 +87,7 @@ interface CompletedTask {
 interface HomePageProps {
   user: { id: string; email: string | null; x_username: string } | null;
   currentTasks: PublicTask[];
+  activeParticipantCounts?: Record<string, number>;
   completedTasks?: CompletedTask[];
   completedParticipantCounts?: Record<string, number>;
 }
@@ -310,7 +311,7 @@ const categoryConfig: Record<string, { dot: string; text: string; bg: string }> 
    HomePage Component
    ──────────────────────────────────────────────────────────── */
 
-export function HomePage({ user, currentTasks, completedTasks = [], completedParticipantCounts = {} }: HomePageProps) {
+export function HomePage({ user, currentTasks, activeParticipantCounts = {}, completedTasks = [], completedParticipantCounts = {} }: HomePageProps) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -757,10 +758,12 @@ export function HomePage({ user, currentTasks, completedTasks = [], completedPar
               {currentTasks.map((task) => {
                 const cat = task.category || "engagement";
                 const cc = categoryConfig[cat] || categoryConfig.other;
+                const participants = activeParticipantCounts[task.id] ?? 0;
+                const isFull = task.max_participants != null && participants >= task.max_participants;
                 return (
                   <div
                     key={task.id}
-                    className="group relative rounded-2xl border border-border bg-white p-5 shadow-soft-sm transition-all duration-300 hover:shadow-soft-md hover:-translate-y-0.5"
+                    className={`group relative rounded-2xl border border-border bg-white p-5 shadow-soft-sm transition-all duration-300 ${isFull ? "opacity-60" : "hover:shadow-soft-md hover:-translate-y-0.5"}`}
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -771,12 +774,22 @@ export function HomePage({ user, currentTasks, completedTasks = [], completedPar
                             {cat}
                           </span>
                           {task.max_participants != null && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted">
-                              <UsersIcon /> Limited spots
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${isFull ? "bg-red-50 text-red-600 border border-red-100" : "bg-neutral-100 text-neutral-600"}`}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                              {participants}/{task.max_participants}
                             </span>
                           )}
+                          {task.max_participants == null && participants > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                              {participants} joined
+                            </span>
+                          )}
+                          {isFull && (
+                            <span className="inline-flex rounded-full bg-red-50 border border-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600">Full</span>
+                          )}
                         </div>
-                        <h3 className="text-[15px] font-semibold leading-snug text-foreground group-hover:text-accent transition-colors">
+                        <h3 className={`text-[15px] font-semibold leading-snug text-foreground ${!isFull ? "group-hover:text-accent" : ""} transition-colors`}>
                           {task.title}
                         </h3>
                       </div>
@@ -788,32 +801,38 @@ export function HomePage({ user, currentTasks, completedTasks = [], completedPar
                     <p className="text-[13px] leading-relaxed text-muted mb-4">{task.description}</p>
 
                     {/* Action */}
-                    <div className="flex items-center gap-2">
-                      {user ? (
-                        <a
-                          href={task.action_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                    {!isFull ? (
+                      <div className="flex items-center gap-2">
+                        {user ? (
+                          <a
+                            href={task.action_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                          >
+                            <XIcon className="w-3.5 h-3.5" /> Go to X <ExternalIcon />
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => handleTaskAction(task.action_url)}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                          >
+                            <XIcon className="w-3.5 h-3.5" /> Sign in to Start <ExternalIcon />
+                          </button>
+                        )}
+                        <Link
+                          href={user ? "/earn" : "#"}
+                          onClick={(e) => { if (!user) { e.preventDefault(); setShowAuthModal(true); } }}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-[13px] font-semibold text-muted hover:text-foreground hover:border-foreground transition-all"
                         >
-                          <XIcon className="w-3.5 h-3.5" /> Go to X <ExternalIcon />
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => handleTaskAction(task.action_url)}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                        >
-                          <XIcon className="w-3.5 h-3.5" /> Sign in to Start <ExternalIcon />
-                        </button>
-                      )}
-                      <Link
-                        href={user ? "/earn" : "#"}
-                        onClick={(e) => { if (!user) { e.preventDefault(); setShowAuthModal(true); } }}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-[13px] font-semibold text-muted hover:text-foreground hover:border-foreground transition-all"
-                      >
-                        Submit Proof
-                      </Link>
-                    </div>
+                          Submit Proof
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="text-[13px] font-medium text-muted">This task is full</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

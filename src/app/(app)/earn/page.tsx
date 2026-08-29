@@ -33,12 +33,11 @@ export default async function EarnPage() {
     review_status: "pending_review" | "approved" | "rejected";
   }>;
 
-  // Fetch participant counts for tasks that have a limit (batched, not N+1)
-  const tasksWithLimits = tasks.filter((t) => t.max_participants != null);
+  // Fetch participant counts for all tasks (batched, not N+1)
   const participantCounts: Record<string, number> = {};
 
-  if (tasksWithLimits.length > 0) {
-    const taskIds = tasksWithLimits.map((t) => t.id);
+  if (tasks.length > 0) {
+    const taskIds = tasks.map((t) => t.id);
     const { data: countRows } = await supabase
       .from("completions")
       .select("task_id")
