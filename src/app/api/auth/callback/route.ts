@@ -77,7 +77,13 @@ export async function GET(request: NextRequest) {
         .eq("id", existingUser.id);
     }
 
-    return NextResponse.redirect(`${appUrl}/earn`);
+    // Check if this was an email verification (signup confirmation)
+    const isEmailVerification = authUser.email_confirmed_at != null;
+    const redirectUrl = isEmailVerification
+      ? `${appUrl}/earn?verified=true`
+      : `${appUrl}/earn`;
+
+    return NextResponse.redirect(redirectUrl);
   } catch {
     return NextResponse.redirect(`${appUrl}/?error=auth_failed`);
   }

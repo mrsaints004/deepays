@@ -321,8 +321,6 @@ export function HomePage({ user, currentTasks, activeParticipantCounts = {}, com
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -399,32 +397,6 @@ export function HomePage({ user, currentTasks, activeParticipantCounts = {}, com
     }
   }
 
-  async function handleVerifyOtp() {
-    if (!otpCode.trim() || otpCode.trim().length !== 6) {
-      setError("Please enter the 6-digit code");
-      return;
-    }
-    setVerifying(true);
-    setError("");
-    try {
-      const res = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token: otpCode.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || "Verification failed");
-        setVerifying(false);
-        return;
-      }
-      window.location.href = "/earn";
-    } catch {
-      setError("Something went wrong. Please try again.");
-      setVerifying(false);
-    }
-  }
-
   async function handleResendOtp() {
     setResending(true);
     setError("");
@@ -436,10 +408,10 @@ export function HomePage({ user, currentTasks, activeParticipantCounts = {}, com
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Failed to resend code");
+        setError(data.message || "Failed to resend email");
       }
     } catch {
-      setError("Failed to resend code");
+      setError("Failed to resend email");
     } finally {
       setResending(false);
     }
@@ -453,7 +425,7 @@ export function HomePage({ user, currentTasks, activeParticipantCounts = {}, com
     window.open(actionUrl, "_blank");
   }
 
-  /* ── OTP verification screen ── */
+  /* ── Email verification screen ── */
   if (verificationSent) {
     return (
       <div className="flex min-h-dvh items-center justify-center px-4 bg-background">
@@ -461,43 +433,41 @@ export function HomePage({ user, currentTasks, activeParticipantCounts = {}, com
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           </div>
-          <h1 className="text-xl font-semibold">Verify your email</h1>
+          <h1 className="text-xl font-semibold">Check your email</h1>
           <p className="mt-2 text-sm text-muted">
-            We sent a 6-digit code to <strong>{email}</strong>. Enter it below to activate your account.
+            We sent a verification link to <strong>{email}</strong>. Click the link in the email to activate your account.
           </p>
-          <div className="mt-6 space-y-3">
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="000000"
-              value={otpCode}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                setOtpCode(val);
-                setError("");
-              }}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-center text-xl font-mono font-semibold tracking-[0.5em] outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20"
-            />
+
+          <div className="mt-6 rounded-xl bg-neutral-50 border border-border p-4">
+            <div className="flex items-start gap-3 text-left">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <p className="text-[13px] font-medium text-foreground">Didn&apos;t get the email?</p>
+                <p className="text-[12px] text-muted mt-0.5">Check your spam folder, or click below to resend.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
             {error && <p className="text-[13px] text-danger font-medium">{error}</p>}
             <button
-              onClick={handleVerifyOtp}
-              disabled={verifying || otpCode.length !== 6}
-              className="w-full rounded-xl bg-accent py-3 text-[14px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+              onClick={handleResendOtp}
+              disabled={resending}
+              className="w-full rounded-xl border border-border bg-white py-3 text-[14px] font-semibold text-foreground transition-all hover:bg-card-hover active:scale-[0.98] disabled:opacity-50"
             >
-              {verifying ? (
+              {resending ? (
                 <span className="inline-flex items-center gap-2">
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Verifying...
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                  Resending...
                 </span>
-              ) : "Verify"}
-            </button>
-            <button onClick={handleResendOtp} disabled={resending} className="text-sm font-medium text-accent hover:underline disabled:opacity-50">
-              {resending ? "Resending..." : "Resend code"}
+              ) : "Resend verification email"}
             </button>
           </div>
+
           <button
-            onClick={() => { setVerificationSent(false); setOtpCode(""); setError(""); setMode("login"); }}
+            onClick={() => { setVerificationSent(false); setError(""); setMode("login"); }}
             className="mt-4 text-sm font-medium text-muted hover:text-foreground"
           >
             Back to login

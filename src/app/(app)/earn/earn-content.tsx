@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskCard } from "@/components/task-card";
 import { formatUSD } from "@/lib/utils";
 import type { Task } from "@/lib/types/database";
@@ -24,6 +24,18 @@ export function EarnContent({ tasks, completions, participantCounts: initialPart
   >(() => new Map(completions.map((c) => [c.task_id, c.review_status])));
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>(initialParticipantCounts);
+  const [verifiedBanner, setVerifiedBanner] = useState(false);
+
+  // Show success banner when redirected after email verification
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "true") {
+      setVerifiedBanner(true);
+      window.history.replaceState({}, "", window.location.pathname);
+      const timer = setTimeout(() => setVerifiedBanner(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const totalTasks = tasks.length;
   const approvedCount = [...completedMap.values()].filter((s) => s === "approved").length;
@@ -73,6 +85,22 @@ export function EarnContent({ tasks, completions, participantCounts: initialPart
 
   return (
     <div className="animate-in">
+      {/* Email verified banner */}
+      {verifiedBanner && (
+        <div className="mb-4 flex items-center gap-3 rounded-2xl bg-success/10 border border-success/20 px-5 py-4 animate-slide-up">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/20">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-success"><polyline points="20 6 9 17 4 12" /></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-[14px] font-semibold text-success">Email verified successfully!</p>
+            <p className="text-[12px] text-success/70">Your account is now active. Start completing tasks to earn rewards.</p>
+          </div>
+          <button onClick={() => setVerifiedBanner(false)} className="text-success/50 hover:text-success transition-colors" aria-label="Dismiss">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-xl font-bold tracking-tight md:text-2xl">Earn</h1>
         <p className="mt-1 text-[13px] text-muted">Complete tasks to earn weekly rewards</p>
