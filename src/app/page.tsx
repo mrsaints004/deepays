@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createAdminClient } from "@/lib/supabase/server";
 import { HomePage } from "@/components/home-page";
 
 export default async function Home() {
@@ -36,13 +36,14 @@ export default async function Home() {
 
   const completedTasks = [...dateExpiredTasks, ...(completedResult.data ?? [])];
 
-  // Fetch participant counts for both active and completed tasks
+  // Fetch participant counts using admin client (bypasses RLS so counts are visible to everyone)
+  const admin = createAdminClient();
   const allTaskIds = [...activeTasks, ...completedTasks].map((t) => t.id);
   let activeParticipantCounts: Record<string, number> = {};
   let completedParticipantCounts: Record<string, number> = {};
 
   if (allTaskIds.length > 0) {
-    const { data: counts } = await supabase
+    const { data: counts } = await admin
       .from("completions")
       .select("task_id")
       .in("task_id", allTaskIds);

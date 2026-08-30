@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createAdminClient } from "@/lib/supabase/server";
 import { getWeekStart } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { EarnContent } from "./earn-content";
@@ -33,12 +33,13 @@ export default async function EarnPage() {
     review_status: "pending_review" | "approved" | "rejected";
   }>;
 
-  // Fetch participant counts for all tasks (batched, not N+1)
+  // Fetch participant counts using admin client (bypasses RLS to count ALL users' submissions)
+  const admin = createAdminClient();
   const participantCounts: Record<string, number> = {};
 
   if (tasks.length > 0) {
     const taskIds = tasks.map((t) => t.id);
-    const { data: countRows } = await supabase
+    const { data: countRows } = await admin
       .from("completions")
       .select("task_id")
       .in("task_id", taskIds);
